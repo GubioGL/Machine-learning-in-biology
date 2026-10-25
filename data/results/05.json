@@ -1,0 +1,131 @@
+{
+  "latex": {
+    "sens-n-scenarios": 9,
+    "sens-nrep": 10,
+    "sens-nsub": 30,
+    "sens-auc-pancer-min": "0.47",
+    "sens-auc-pancer-max": "0.58",
+    "sens-auc-panfpl-min": "0.98",
+    "sens-balacc-min": "0.56",
+    "sens-balacc-max": "0.67",
+    "sens-spatial-balacc": "0.56",
+    "sens-ref-balacc": "0.62",
+    "sens-spatial-auc-pancer": "0.47",
+    "sens-ref-auc-pancer": "0.57",
+    "sens-equal-pan-to-cer": "52.4\\%",
+    "sens-equal-auc-pancer": "0.57",
+    "camp-fpl-R2": "0.103",
+    "camp-fpl-p": "= 0.597",
+    "camp-land-R2": "0.354",
+    "transfer-fpl": "2024-01: 100\\% of 9; 2024-03: 83\\% of 6; 2024-06: 67\\% of 3",
+    "transfer-fpl-min": "67\\%",
+    "sens-nobeq-auc-pancer": "0.54",
+    "sens-nobeq-pan-to-cer": "61.8\\%",
+    "sens-nobeq-balacc": "0.67",
+    "pan-camp-202405": "2 points: P(Cerrado) = 0.60, P(Pantanal) = 0.40, P(floodplain) = 0.00",
+    "pan-camp-202511": "9 points: P(Cerrado) = 0.44, P(Pantanal) = 0.52, P(floodplain) = 0.04"
+  },
+  "raw": {
+    "scenarios": {
+      "Reference": {
+        "balanced_accuracy": 0.624777183600713,
+        "recall_pantanal": 0.42727272727272725,
+        "pantanal_to_cerrado": 0.5454545454545454,
+        "auc_pan_cer": 0.5668449197860963,
+        "auc_pan_fpl": 1.0
+      },
+      "Spatial blocks (3 per landscape)": {
+        "balanced_accuracy": 0.5628837393543276,
+        "recall_pantanal": 0.43636363636363634,
+        "pantanal_to_cerrado": 0.5272727272727271,
+        "auc_pan_cer": 0.47058823529411764,
+        "auc_pan_fpl": 0.9949494949494949
+      },
+      "Presence/absence": {
+        "balanced_accuracy": 0.6593582887700535,
+        "recall_pantanal": 0.3545454545454546,
+        "pantanal_to_cerrado": 0.6181818181818182,
+        "auc_pan_cer": 0.5133689839572193,
+        "auc_pan_fpl": 1.0
+      },
+      "Without singletons (4 species)": {
+        "balanced_accuracy": 0.5999108734402853,
+        "recall_pantanal": 0.39090909090909093,
+        "pantanal_to_cerrado": 0.609090909090909,
+        "auc_pan_cer": 0.5668449197860963,
+        "auc_pan_fpl": 1.0
+      },
+      "Without $A.~bequaerti$": {
+        "balanced_accuracy": 0.6717171717171717,
+        "recall_pantanal": 0.38181818181818183,
+        "pantanal_to_cerrado": 0.6181818181818182,
+        "auc_pan_cer": 0.5401069518716578,
+        "auc_pan_fpl": 1.0
+      },
+      "mtry = 2": {
+        "balanced_accuracy": 0.6466131907308378,
+        "recall_pantanal": 0.4545454545454545,
+        "pantanal_to_cerrado": 0.5454545454545454,
+        "auc_pan_cer": 0.5561497326203209,
+        "auc_pan_fpl": 1.0
+      },
+      "mtry = 8": {
+        "balanced_accuracy": 0.5853931471578531,
+        "recall_pantanal": 0.35454545454545455,
+        "pantanal_to_cerrado": 0.5545454545454545,
+        "auc_pan_cer": 0.5828877005347594,
+        "auc_pan_fpl": 0.9848484848484849
+      },
+      "Minimum leaf size 3": {
+        "balanced_accuracy": 0.6274212715389186,
+        "recall_pantanal": 0.3636363636363636,
+        "pantanal_to_cerrado": 0.5727272727272728,
+        "auc_pan_cer": 0.5347593582887701,
+        "auc_pan_fpl": 1.0
+      },
+      "Equal n (11 per landscape)": {
+        "balanced_accuracy": 0.6434343434343435,
+        "recall_pantanal": 0.4424242424242424,
+        "pantanal_to_cerrado": 0.5242424242424242,
+        "auc_pan_cer": 0.5745179063360882,
+        "auc_pan_fpl": 0.9944903581267216
+      }
+    },
+    "floodplain_campaign_permanova": {
+      "F": 0.860882816952242,
+      "R2": 0.10296554033824577,
+      "p": 0.5967,
+      "n_perm": 9999,
+      "df1": 2,
+      "df2": 15
+    },
+    "campaign_transfer": {
+      "2024-01": [
+        9,
+        1.0
+      ],
+      "2024-03": [
+        6,
+        0.8333333333333334
+      ],
+      "2024-06": [
+        3,
+        0.6666666666666667
+      ]
+    },
+    "pantanal_campaigns": {
+      "2024-05": {
+        "floodplain": 0.0,
+        "pantanal": 0.396410161782662,
+        "cerrado": 0.6035898382173384,
+        "n": 2
+      },
+      "2025-11": {
+        "floodplain": 0.03975555555555555,
+        "pantanal": 0.5189792094942096,
+        "cerrado": 0.441265234950235,
+        "n": 9
+      }
+    }
+  }
+}

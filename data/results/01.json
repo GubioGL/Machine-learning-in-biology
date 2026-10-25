@@ -1,0 +1,155 @@
+{
+  "latex": {
+    "n-points": 46,
+    "n-species": 17,
+    "n-records": 99,
+    "n-floodplain": 18,
+    "n-pantanal": 11,
+    "n-cerrado": 17,
+    "n-individuals-suspension": 358,
+    "n-individuals-all": 653,
+    "n-species-all": 23,
+    "permanova-F": "11.77",
+    "permanova-R2": "0.354",
+    "permanova-p": "$\\leq$ 0.0001",
+    "permanova-pancer-F": "1.95",
+    "permanova-pancer-R2": "0.070",
+    "permanova-pancer-padj": "= 0.085",
+    "permanova-panfpl-F": "14.01",
+    "permanova-panfpl-R2": "0.342",
+    "permanova-panfpl-padj": "$<$ 0.001",
+    "permanova-cerfpl-F": "16.27",
+    "permanova-cerfpl-R2": "0.330",
+    "permanova-cerfpl-padj": "$<$ 0.001",
+    "permdisp-F": "2.75",
+    "permdisp-p": "= 0.079",
+    "nperm-community": 9999,
+    "pcoa-axis1": "38.2\\%",
+    "pcoa-axis2": "12.5\\%",
+    "diss-pan-cer": "0.57",
+    "diss-pan-fpl": "1.00",
+    "diss-cer-fpl": "0.99",
+    "diss-within-pan": "0.56",
+    "diss-within-fpl": "0.74",
+    "diss-within-cer": "0.55",
+    "pool-jac-pan-cer": "0.47",
+    "pool-jac-pan-fpl": "0.36",
+    "pool-jac-cer-fpl": "0.14",
+    "dist-pan-cer": "224",
+    "dist-pan-fpl": "592",
+    "dist-cer-fpl": "388",
+    "pool-n-pan": 15,
+    "pool-n-fpl": 15,
+    "pool-n-cer": 10,
+    "shared-pan-fpl-suspension": 1,
+    "shared-pan-cer-suspension": 3,
+    "shared-cer-fpl-suspension": 2,
+    "only-bequaerti-pan": "4 of 11",
+    "only-bequaerti-cer": "9 of 17",
+    "richness-pan": "1.73",
+    "richness-fpl": "2.72",
+    "richness-cer": "1.47"
+  },
+  "raw": {
+    "permanova": {
+      "F": 11.767733714969735,
+      "R2": 0.3537281443873803,
+      "p": 0.0001,
+      "n_perm": 9999,
+      "df1": 2,
+      "df2": 43
+    },
+    "pairwise": [
+      {
+        "a": "cerrado",
+        "b": "floodplain",
+        "F": 16.27451390765739,
+        "R2": 0.33028258661580195,
+        "p": 0.0001,
+        "n_perm": 9999,
+        "df1": 1,
+        "df2": 33,
+        "p_adj": 0.00030000000000000003
+      },
+      {
+        "a": "cerrado",
+        "b": "pantanal",
+        "F": 1.9457575807523868,
+        "R2": 0.06962622412829221,
+        "p": 0.0854,
+        "n_perm": 9999,
+        "df1": 1,
+        "df2": 26,
+        "p_adj": 0.0854
+      },
+      {
+        "a": "floodplain",
+        "b": "pantanal",
+        "F": 14.01471128179578,
+        "R2": 0.3416996205460589,
+        "p": 0.0001,
+        "n_perm": 9999,
+        "df1": 1,
+        "df2": 27,
+        "p_adj": 0.00030000000000000003
+      }
+    ],
+    "permdisp": {
+      "F": 2.7477133197265977,
+      "p": 0.0787,
+      "mean_dist": {
+        "cerrado": 0.4135229726770352,
+        "floodplain": 0.5204499568857738,
+        "pantanal": 0.39705363414102557
+      }
+    },
+    "mean_dissimilarity": [
+      [
+        0.7430464778503993,
+        0.9993686868686869,
+        0.9900469447038074
+      ],
+      [
+        0.9993686868686869,
+        0.5615151515151514,
+        0.574331550802139
+      ],
+      [
+        0.9900469447038074,
+        0.574331550802139,
+        0.5465686274509803
+      ]
+    ],
+    "species_pool_jaccard": {
+      "pantanal-cerrado": 0.47058823529411764,
+      "pantanal-floodplain": 0.36363636363636365,
+      "cerrado-floodplain": 0.13636363636363635
+    },
+    "sampling": [
+      {
+        "landscape": "floodplain",
+        "points": 18,
+        "campaigns": "2024-01 (9), 2024-03 (6), 2024-06 (5)",
+        "records": 52,
+        "species": 11,
+        "richness": 2.7222222222222223
+      },
+      {
+        "landscape": "pantanal",
+        "points": 11,
+        "campaigns": "2024-05 (2), 2025-11 (9)",
+        "records": 20,
+        "species": 6,
+        "richness": 1.7272727272727273
+      },
+      {
+        "landscape": "cerrado",
+        "points": 17,
+        "campaigns": "2025-09 (17)",
+        "records": 27,
+        "species": 6,
+        "richness": 1.4705882352941178
+      }
+    ]
+  }
+}

@@ -1,0 +1,510 @@
+% =====================================================================================
+%  GUIA-PONTE: aprendizado de máquina <-> biologia das vespas sociais
+%  Documento de apoio para os autores (NÃO faz parte do artigo).
+%  No Overleaf: Menu -> Main document -> guia_ponte_ml_biologia.tex para compilar este
+%  arquivo (volte para main.tex depois). Usa os mesmos números gerados pelos scripts
+%  (paper/generated/res_*.tex), então os exemplos mostram os valores da última execução.
+% =====================================================================================
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+\IfFileExists{brazil.ldf}{\usepackage[brazil]{babel}}{}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,tabularx,longtable}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue!50!black, urlcolor=blue!50!black}
+
+\makeatletter
+\newcommand{\setres}[2]{\expandafter\def\csname res@#1\endcsname{#2}}
+\newcommand{\res}[1]{\ifcsname res@#1\endcsname\csname res@#1\endcsname\else\textcolor{red}{[#1?]}\fi}
+\makeatother
+\newcommand{\inputres}[1]{\IfFileExists{generated/#1.tex}{\input{generated/#1.tex}}{}}
+\inputres{res_01}\inputres{res_02}\inputres{res_03}\inputres{res_04}\inputres{res_05}
+
+\newtcolorbox{bio}{colback=green!4, colframe=green!40!black, title=Para quem vem da biologia,
+  fonttitle=\bfseries\small, boxrule=0.5pt, arc=2pt}
+\newtcolorbox{mlbox}{colback=blue!4, colframe=blue!50!black, title=Para quem vem do ML,
+  fonttitle=\bfseries\small, boxrule=0.5pt, arc=2pt}
+\newtcolorbox{cuidado}{colback=red!3, colframe=red!50!black, title=Cuidado,
+  fonttitle=\bfseries\small, boxrule=0.5pt, arc=2pt}
+\setlist[description]{style=nextline, leftmargin=1.2em, itemsep=3pt}
+\newcommand{\taxon}[1]{\textit{#1}}
+
+\title{Guia-ponte: aprendizado de máquina e vespas sociais\\[2pt]
+\large O que cada algoritmo faz com os nossos dados, por que ele ajuda e o que ele não prova}
+\author{Documento de apoio ao artigo \emph{Lost signatures} (não submeter)}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+% =====================================================================================
+\section{Para que serve este guia}
+O artigo junta duas formações. Quem programa e conhece aprendizado de máquina (ML) e
+matemática sabe como os modelos funcionam, mas não sabe por que uma vespa da tribo Epiponini
+precisa de mata ripária. Os biólogos do grupo sabem o oposto. Este guia faz a tradução nos dois
+sentidos e explica, algoritmo por algoritmo, \textbf{que pergunta biológica cada análise responde}
+e \textbf{se ela ajuda a descrever, a prever ou a explicar}.
+
+A ideia central do artigo cabe numa frase:
+\begin{quote}
+\emph{Se a lista de vespas de um ponto permite adivinhar de que paisagem ele veio, a paisagem tem
+identidade; se duas paisagens são sistematicamente confundidas, as identidades delas se
+sobrepõem --- e é exatamente isso que a homogeneização biótica prevê para uma área úmida
+degradada.}
+\end{quote}
+O classificador, portanto, não é o objetivo: é um \textbf{instrumento de medida} da identidade
+ecológica. Como todo instrumento, ele precisa ser calibrado (validação, controle do acaso,
+correção do desbalanceamento), e é por isso que o artigo tem tantas análises de controle.
+
+\begin{table}[h]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright}p{4.1cm}>{\raggedright}p{4.2cm}lX}
+\toprule
+Pergunta biológica & Análise & Tipo & Onde\\
+\midrule
+A composição muda entre paisagens? & Jaccard + PCoA, PERMANOVA, PERMDISP & descrever & Fig.~1, \texttt{run/01}\\
+A lista de espécies identifica a paisagem? & 7 classificadores + validação cruzada + permutação & prever & Fig.~2, \texttt{run/02}\\
+O Pantanal ficou parecido com o Cerrado? & AUC por pares + bootstrap pareado & testar & Fig.~3, \texttt{run/03}\\
+Quais espécies fazem (ou apagam) a fronteira? & importância, dependência parcial, SHAP, IndVal & explicar & Figs.~4--5, \texttt{run/04}\\
+A conclusão é robusta? & blocos espaciais, $n$ igual, sem espécies, campanhas & validar & Tab.~S2, \texttt{run/05}\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================================
+\section{Biologia mínima para quem vem do ML}
+
+\begin{description}
+\item[Vespas sociais (Vespidae: Polistinae)] Vespas que vivem em colônias com rainha(s) e
+operárias. No Brasil há três tribos nos nossos dados: \emph{Epiponini} (\taxon{Agelaia},
+\taxon{Polybia}, \taxon{Apoica}, \taxon{Brachygastra}, \taxon{Parachartergus}), que fundam colônias por
+\textbf{enxameagem} (um grupo de operárias sai com rainhas e constrói um ninho grande, às vezes
+com milhares de indivíduos); e \emph{Polistini} (\taxon{Polistes}) e \emph{Mischocyttarini}
+(\taxon{Mischocyttarus}), de \textbf{fundação independente} (uma ou poucas fêmeas iniciam um ninho
+pequeno). Ninhos grandes e duradouros exigem vegetação estruturada, água e muitas presas; por isso
+as Epiponini são sensíveis à estrutura do habitat.
+
+\item[Por que vespas são bons ``sensores''] O ninho depende de substrato vegetal, de fibras e de
+água; a colônia depende de presas (outros insetos). Mudanças na vegetação e no microclima
+(insolação, dessecação) afetam diretamente onde colônias conseguem existir.
+
+\item[Armadilha atrativa suspensa] Garrafa com suco de fruta (goiaba, laranja, maracujá)
+pendurada na vegetação por quatro dias. É um \emph{sensor com viés}: só detecta espécies
+atraídas por isca açucarada e que forrageiam perto do ponto. Malaise e puçá (rede) detectam
+outras espécies, mas o esforço foi diferente entre áreas, então ficaram fora do modelo.
+
+\item[Registro independente (deduplicação)] Uma armadilha perto de um ninho pode pegar 50
+operárias da \emph{mesma colônia}. Contar indivíduos mediria ``distância até o ninho mais
+próximo'', não ``a espécie ocorre aqui''. Por isso contamos cada combinação espécie $\times$
+ponto $\times$ data uma vez. Em ML: é como remover duplicatas quase idênticas que inflariam o
+peso de um exemplo. Resultado: \res{n-individuals-suspension} indivíduos viram
+\res{n-records} registros em \res{n-points} pontos.
+
+\item[Zero não é ausência] Um zero na matriz significa ``não detectada naquele ponto e data'', não
+``a espécie não existe ali''. A detecção é imperfeita; espécies raras geram muitos zeros. Por
+isso modelos baseados em árvores (que não supõem distribuição) e medidas de presença/ausência
+(Jaccard) são escolhas naturais.
+
+\item[Assembleia / comunidade] O conjunto de espécies de um grupo (aqui, vespas sociais) num local.
+É o nosso vetor de \emph{features}: cada coluna da matriz é uma espécie.
+
+\item[Diversidade alfa, beta e gama] Alfa = riqueza num ponto (número de espécies). Beta = quão
+diferentes os pontos são entre si. Gama = total da região. A homogeneização biótica é uma
+\textbf{queda da diversidade beta} entre lugares que deveriam ser diferentes.
+
+\item[Espécie indicadora, especialista e generalista] Especialista: só vive num tipo de ambiente
+(ex.: \taxon{Agelaia pallipes} só apareceu na várzea). Generalista: tolera muitos ambientes (ex.:
+\taxon{Agelaia bequaerti}, em \res{abeq-prev-pan} dos pontos do Pantanal e \res{abeq-prev-cer} dos do
+Cerrado). Indicadora: espécie cuja presença informa o tipo de ambiente --- em ML, uma
+\emph{feature} muito informativa e com explicação biológica plausível.
+
+\item[Homogeneização biótica] Perturbação humana elimina especialistas e favorece generalistas;
+comunidades de lugares diferentes ficam parecidas. \textbf{Tradução para ML:} as classes passam a
+se sobrepor no espaço de \emph{features}; o erro de Bayes entre elas aumenta; o AUC do par cai em
+direção a 0,5.
+
+\item[As três paisagens]
+\emph{Planície de inundação} (Parque Estadual das Várzeas do Rio Ivinhema): várzea preservada,
+alagada sazonalmente, com mata ripária; bacia do rio Paraná.
+\emph{Pantanal} (APA Baía Negra, Ladário): área úmida do Pantanal com uso humano (unidade de uso
+sustentável); bacia do rio Paraguai.
+\emph{Cerrado} (Parque Nacional da Serra da Bodoquena): planalto seco, savana e florestas
+estacionais; bacia do rio Paraguai.
+A hipótese é que o Pantanal ``deveria'' se parecer com a várzea (ambas alagáveis), mas, degradado,
+passou a se parecer com o Cerrado.
+
+\item[Pulso de inundação] O ciclo anual de cheia e seca que estrutura as áreas úmidas: cria e
+destrói habitats, renova nutrientes, define quais plantas (e, portanto, quais vespas) podem viver ali.
+
+\item[Estação seca e chuvosa] Em Mato Grosso do Sul a seca vai, grosso modo, de maio a
+setembro/outubro. A atividade das vespas muda com a estação. \textbf{Importante:} as áreas foram
+coletadas em campanhas diferentes (Cerrado em set/2025, quase todo o Pantanal em nov/2025, a
+várzea em jan--jun/2024). A estação e o ano são, portanto, variáveis de confusão.
+
+\item[Bacia hidrográfica e decaimento com a distância] Comunidades próximas tendem a ser mais
+parecidas só por estarem perto (\emph{distance decay}). O Pantanal e o Cerrado estudados estão a
+\res{dist-pan-cer}~km um do outro e na mesma bacia; a várzea está a \res{dist-pan-fpl}~km do
+Pantanal, noutra bacia. Isso é uma explicação alternativa forte para a semelhança Pantanal--Cerrado.
+
+\item[Pseudo-replicação] Cada paisagem é \emph{uma única área}. Os 11 pontos do Pantanal não são
+11 Pantanais; são 11 amostras do mesmo lugar (espalhadas por menos de 1~km). \textbf{Tradução
+para ML:} a classe ``Pantanal'' é idêntica ao grupo ``Baía Negra''; o modelo aprende a reconhecer
+\emph{lugares}, e não há como testar a generalização para outro Pantanal. Por isso o artigo
+fala em ``estudo de caso'' e ``compatível com'', não em ``prova''.
+\end{description}
+
+% =====================================================================================
+\section{Aprendizado de máquina mínimo para quem vem da biologia}
+
+\begin{description}
+\item[Classificação supervisionada] Damos ao algoritmo exemplos com a resposta certa (a lista de
+espécies de um ponto e a paisagem de onde ele veio) e ele aprende uma regra que, dada uma lista
+nova, devolve a paisagem mais provável e a probabilidade de cada uma.
+
+\item[Treino e teste] O modelo aprende com parte dos pontos e é avaliado em pontos que
+\emph{não viu}. Avaliar nos mesmos pontos do treino é como o aluno corrigir a própria prova: a
+nota sai alta e não significa nada.
+
+\item[Validação cruzada (CV) estratificada repetida] Dividimos os \res{n-points} pontos em 5 partes
+com a mesma proporção de paisagens; treinamos em 4 e testamos na 5ª, girando até cada ponto ter
+sido testado uma vez. Repetimos isso \res{nrep} vezes com sorteios diferentes. Com tão poucos pontos,
+um único sorteio pode dar sorte ou azar; a repetição mostra a faixa de resultados plausíveis.
+
+\item[Out-of-bag (OOB)] No Random Forest cada árvore não vê cerca de 1/3 dos pontos; testar cada
+ponto só nas árvores que não o viram dá uma estimativa parecida com a CV. Foi o que o rascunho usou
+(acurácia OOB \res{oob-acc-draft-replication}, que reproduzimos exatamente em Python).
+
+\item[Sobreajuste e vazamento] Sobreajuste = decorar ruído em vez do padrão (o modelo vai bem no
+treino e mal em dados novos). Vazamento = informação do teste ``vazar'' para o treino --- por
+exemplo, dois pontos vizinhos quase idênticos, um no treino e outro no teste. Os dois inflam a
+acurácia. A CV com blocos espaciais (Seção~\ref{sec:blocos}) controla o vazamento por vizinhança.
+
+\item[Matriz de confusão] Tabela observado $\times$ previsto. A diagonal são os acertos; fora dela,
+os erros, e \emph{para onde} eles vão. No rascunho, ela era o resultado principal; agora é apoio.
+
+\item[Acurácia e acurácia balanceada] Acurácia = fração de acertos. Com classes de tamanhos
+diferentes ela engana: um modelo que nunca diz ``Pantanal'' ainda acerta 35 de 46 pontos (76\%).
+A \textbf{acurácia balanceada} é a média do acerto em cada paisagem; esse modelo teria 67\% (100\%,
+100\%, 0\%), e o acaso dá cerca de 33\%.
+
+\item[Kappa de Cohen] Acerto descontando o que se acertaria por acaso. 0 = acaso; 1 = perfeito.
+
+\item[Log-loss] Penaliza o modelo por ter \emph{certeza} e errar. Avalia as probabilidades, não só o
+rótulo. Menor é melhor.
+
+\item[AUC (área sob a curva ROC)] Para duas paisagens A e B: a probabilidade de o modelo dar nota
+maior a um ponto de A do que a um ponto de B. 0,5 = moeda (indistinguíveis); 1 = separação perfeita.
+É a métrica central do teste de homogeneização.
+
+\item[Probabilidade vs.\ rótulo] O modelo devolve, por exemplo, Pantanal 0,48, Cerrado 0,49,
+várzea 0,03. O rótulo seria ``Cerrado'', mas a informação biológica está nas probabilidades: esse
+ponto é meio Pantanal, meio Cerrado e nada várzea.
+
+\item[Desbalanceamento de classes] O Pantanal tem \res{n-pantanal} pontos; a várzea, \res{n-floodplain}.
+Modelos comuns tendem a ``empurrar'' casos duvidosos para as classes maiores. Isso, sozinho,
+\emph{imitaria} a homogeneização (Pantanal sendo chamado de Cerrado). Por isso usamos pesos de
+classe e o \emph{Balanced Random Forest}.
+
+\item[Hiperparâmetro] ``Botão'' de configuração do algoritmo que não é aprendido dos dados (número
+de árvores, número $k$ de vizinhos). Fixamos valores-padrão de antemão, para não ``procurar'' o
+botão que dá o melhor resultado (isso inflaria a acurácia), e testamos outros valores na análise de
+robustez.
+
+\item[Teste de permutação] Embaralhamos os rótulos das paisagens e refazemos \emph{toda} a
+validação centenas de vezes. Se a acurácia real supera quase todas as embaralhadas, o padrão não é
+acaso. É exatamente o raciocínio da PERMANOVA que vocês já usam.
+
+\item[Bootstrap] Reamostrar os pontos com reposição milhares de vezes e recalcular a estatística;
+a dispersão dos resultados dá o intervalo de confiança.
+\end{description}
+
+% =====================================================================================
+\section{Cada algoritmo: o que faz, o que responde e por que ajuda}
+Para cada análise: \emph{em uma frase}; \emph{o que faz com os nossos dados}; \emph{que
+pergunta responde}; \emph{por que ajuda}; \emph{cuidados}; \emph{onde está}.
+
+\subsection{Jaccard, PCoA, PERMANOVA e PERMDISP (descrever)}
+\begin{description}
+\item[Em uma frase] Medem o quanto as listas de espécies dos pontos se parecem e testam se as
+paisagens ocupam regiões diferentes desse ``espaço de semelhança''.
+\item[O que faz] Jaccard entre dois pontos = fração das espécies que \emph{não} é compartilhada
+(0 = mesma lista; 1 = nada em comum). A PCoA desenha os pontos num plano em que a distância
+aproxima a dissimilaridade. A PERMANOVA compara a variação entre paisagens com a variação dentro
+delas (pseudo-$F$, $R^2$) e obtém o $p$ por permutação. A PERMDISP testa se uma paisagem é
+apenas mais ``espalhada'' que outra.
+\item[Responde] As composições diferem? (Sim: $R^2$ = \res{permanova-R2}.) E par a par? A várzea
+difere das duas; Pantanal $\times$ Cerrado não ($p_{\mathrm{Holm}}$ \res{permanova-pancer-padj}).
+\item[Por que ajuda] É a linguagem que os revisores de ecologia esperam e conecta o artigo ao
+manuscrito irmão (reproduzimos o mesmo $F$ = \res{permanova-F}).
+\item[Cuidados] Diz \emph{se} há diferença, não \emph{quanto} um grupo virou o outro, nem em que
+direção --- é aí que entra o ML.
+\item[Onde] \texttt{src/community.py}, \texttt{run/01\_community\_description.py}; Fig.~1.
+\end{description}
+
+\subsection{Classificador nulo (referência)}
+\begin{description}
+\item[Em uma frase] ``Chuta'' sempre a paisagem mais comum no treino.
+\item[Por que ajuda] Define o piso. Sem ele, ``74\% de acerto'' não quer dizer nada: com estas
+proporções, chutar sempre ``várzea'' acerta 39\%. Acurácia balanceada do nulo:
+\res{null-prior-balacc}.
+\end{description}
+
+\subsection{Regressão logística multinomial com penalização $L_2$ (baseline interpretável)}
+\begin{description}
+\item[Em uma frase] Dá a cada espécie um peso por paisagem; somando os pesos das espécies
+presentes, obtém a probabilidade de cada paisagem.
+\item[Responde] Um modelo \emph{linear} (sem interações entre espécies) já basta?
+\item[Por que ajuda] Se ela empata com os modelos complexos, a mensagem biológica é simples:
+cada espécie contribui isoladamente. Aqui ela chegou a \res{logistic-balacc}, perto das florestas
+--- o sinal é forte e simples.
+\item[Cuidados] Espécies raras ganham pesos instáveis; a penalização $L_2$ ``encolhe'' os pesos
+para controlar isso.
+\end{description}
+
+\subsection{$k$ vizinhos mais próximos com Jaccard (a ponte mais direta)}
+\begin{description}
+\item[Em uma frase] Um ponto recebe a paisagem dos 5 pontos com a fauna mais parecida.
+\item[Responde] O que a semelhança de composição, sozinha, implica?
+\item[Por que ajuda] É a versão preditiva da análise de similaridade dos ecólogos. Aqui ele mandou
+\res{knn-pan-to-cer} dos pontos do Pantanal para o Cerrado: pela composição pura, os pontos do
+Pantanal ``moram'' no meio dos pontos do Cerrado.
+\item[Cuidados] Muito sensível ao desbalanceamento (vizinhos tendem a ser da classe maior).
+\end{description}
+
+\subsection{Árvore de decisão (o tijolo das florestas)}
+\begin{description}
+\item[Em uma frase] Uma sequência de perguntas sim/não sobre espécies: ``tem \taxon{A.~pallipes}?
+$\to$ várzea; senão, tem \taxon{P.~ruficeps}? $\to$ Pantanal; senão $\to$ Cerrado''.
+\item[Por que ajuda] Captura combinações (interações) e ignora zeros irrelevantes. Sozinha é
+instável: muda muito com poucos pontos diferentes.
+\end{description}
+
+\subsection{Random Forest (modelo flexível principal)}
+\begin{description}
+\item[Em uma frase] Centenas de árvores, cada uma treinada com um sorteio dos pontos e, em cada
+pergunta, com um sorteio das espécies; a previsão é a votação (média das probabilidades).
+\item[Responde] A combinação de espécies identifica a paisagem, incluindo interações?
+\item[Por que ajuda] É o padrão em ecologia para dados de comunidade: lida com zeros, espécies
+raras e não linearidade, sem supor distribuição. O sorteio torna as árvores diferentes entre si e
+a média reduz o erro.
+\item[Cuidados] Sem correção, favorece as classes grandes (ver a próxima).
+\end{description}
+
+\subsection{Random Forest ponderado e \emph{Balanced} Random Forest (corrigir o viés)}
+\begin{description}
+\item[Em uma frase] O ponderado dá mais peso aos pontos da classe pequena; o balanceado treina
+cada árvore com o mesmo número de pontos de cada paisagem.
+\item[Por que ajuda --- e por que é essencial aqui] A hipótese H2 é justamente ``o Pantanal (classe
+pequena) é confundido com o Cerrado''. Um modelo enviesado para classes grandes produziria essa
+confusão mesmo sem homogeneização. O RF sem correção (o do rascunho) mandou
+\res{rf-default-pan-to-cer} dos pontos do Pantanal para o Cerrado; o balanceado,
+\res{brf-pan-to-cer}. E mais: no RF sem correção a confusão parecia de mão única (Cerrado
+``absorvendo'' o Pantanal: só \res{rf-default-cer-to-pan} dos pontos do Cerrado iam para o Pantanal);
+com classes balanceadas ela ficou mútua (\res{brf-cer-to-pan} do Cerrado vão para o Pantanal). A
+sobreposição é sinal biológico; a assimetria do rascunho era artefato do tamanho das classes.
+\end{description}
+
+\subsection{Gradient boosting raso (checagem de robustez)}
+\begin{description}
+\item[Em uma frase] Árvores pequenas em sequência, cada uma corrigindo os erros das anteriores.
+\item[Por que ajuda] Outra forma de combinar árvores. Se chega às mesmas conclusões, o resultado
+não é peculiaridade de um algoritmo.
+\item[Cuidados] Sobreajusta fácil com $n$ pequeno; por isso profundidade 2 e folhas com $\geq4$ pontos.
+\end{description}
+
+\subsection{AUC por pares + bootstrap pareado (o teste da homogeneização)}
+\begin{description}
+\item[Em uma frase] Treina um classificador só Pantanal $\times$ Cerrado e outro só Pantanal
+$\times$ várzea e compara quão separáveis os pares são.
+\item[Responde] Diretamente a H2: $\mathrm{AUC}_{\mathrm{Pan}\times\mathrm{Cer}} <
+\mathrm{AUC}_{\mathrm{Pan}\times\mathrm{Fpl}}$?
+\item[Por que ajuda] Transforma ``o modelo confundiu'' numa \emph{medida com intervalo de
+confiança}, que não depende do desbalanceamento de uma matriz de confusão de 3 classes. Resultado:
+Pantanal $\times$ várzea = \res{brf-auc-panfpl}; Pantanal $\times$ Cerrado = \res{brf-auc-pancer};
+diferença = \res{brf-dauc}.
+\item[Bootstrap pareado] Os dois AUCs usam os mesmos 11 pontos do Pantanal; por isso reamostramos
+esses pontos uma vez só para os dois. Assim a incerteza da diferença é calculada corretamente.
+\item[Onde] \texttt{run/03\_homogenization\_test.py}; Fig.~3 (figura principal do artigo).
+\end{description}
+
+\subsection{Probabilidades fora da amostra e o triângulo (descrever o grau)}
+\begin{description}
+\item[Em uma frase] Para cada ponto, as probabilidades das três paisagens, plotadas num triângulo
+(cada vértice = certeza de uma paisagem).
+\item[Por que ajuda] Mostra um \emph{gradiente}, não sim/não. Os pontos do Pantanal ficam sobre a
+aresta Pantanal--Cerrado e longe do vértice da várzea: probabilidade média de Cerrado
+\res{pan-pcer}, de várzea \res{pan-pfpl}. É a imagem da homogeneização.
+\end{description}
+
+\subsection{Importância por permutação fora da amostra + teste de Altmann (explicar)}
+\begin{description}
+\item[Em uma frase] Embaralha uma espécie entre os pontos de teste e mede quanto o modelo piora.
+\item[Responde] De quais espécies a capacidade de \emph{generalizar} depende?
+\item[Por que ajuda] Calculada só em pontos não vistos, mede o que é útil para prever dados novos,
+não o que o modelo decorou. O $p$-valor vem de recalcular as importâncias com rótulos
+embaralhados (Altmann et al.\ 2010).
+\item[Cuidados] Espécies que ocorrem juntas dividem a importância (se uma é embaralhada, a outra
+``cobre''); importância negativa ou nula de uma espécie compartilhada não significa que ela não
+importa biologicamente, só que ela não ajuda a \emph{separar}.
+\end{description}
+
+\subsection{Dependência parcial (a ``curva de tolerância'' vista pelo modelo)}
+\begin{description}
+\item[Em uma frase] Como a probabilidade de cada paisagem muda quando fixamos a frequência de uma
+espécie em 0, 1, 2 registros em todos os pontos.
+\item[Por que ajuda] Dá a \emph{direção} do efeito. Lição importante para os dois artigos: a
+``afinidade'' de \taxon{A.~bequaerti} depende do peso das classes. No RF sem correção ela parece
+indicar Cerrado (\res{abeq-pdunw-cer}); com classes balanceadas ela sobe tanto Pantanal
+(\res{abeq-pd-pan}) quanto Cerrado (\res{abeq-pd-cer}); o IndVal, que também iguala os grupos, a
+coloca no Pantanal. Conclusão biológica: ela marca o \emph{conjunto} Pantanal+Cerrado.
+\end{description}
+
+\subsection{SHAP (contribuição de cada espécie a cada previsão)}
+\begin{description}
+\item[Em uma frase] Divide a previsão de cada ponto em contribuições somáveis das espécies (valores
+de Shapley da teoria dos jogos).
+\item[Por que ajuda] Explica pontos individuais: ``neste ponto, a presença de \taxon{P.~ruficeps}
+empurrou a probabilidade de Pantanal para cima em 0,3''. Complementa a importância global.
+\end{description}
+
+\subsection{IndVal.g (a visão clássica das indicadoras)}
+\begin{description}
+\item[Em uma frase] Combina especificidade (a espécie está concentrada numa paisagem?) e
+fidelidade (aparece na maioria dos pontos dessa paisagem?).
+\item[Por que ajuda] É o que o manuscrito irmão usou; comparar com a importância do ML mostra onde
+os dois olhares concordam (especialistas da várzea) e onde divergem (generalistas compartilhados).
+\end{description}
+
+\subsection{Validação cruzada com blocos espaciais}\label{sec:blocos}
+\begin{description}
+\item[Em uma frase] Agrupa os pontos de cada área em 3 manchas e testa sempre uma mancha inteira
+que o modelo não viu.
+\item[Por que ajuda] Se pontos vizinhos inflassem a acurácia, ela despencaria aqui. Caiu um pouco
+(\res{sens-spatial-balacc} vs.\ \res{sens-ref-balacc}), e o Pantanal continuou indistinguível do
+Cerrado (AUC \res{sens-spatial-auc-pancer}).
+\item[Limite] Não resolve a pseudo-replicação entre áreas (só há uma área por paisagem).
+\end{description}
+
+\subsection{Análises de sensibilidade (a conclusão sobrevive?)}
+Cada cenário muda uma decisão: presença/ausência, sem espécies de um ponto só, 11 pontos por
+paisagem, sem \taxon{A.~bequaerti}, outros hiperparâmetros, checagens de campanha. O AUC
+Pantanal $\times$ Cerrado ficou entre \res{sens-auc-pancer-min} e \res{sens-auc-pancer-max} em
+todos; o Pantanal $\times$ várzea, sempre $\geq$ \res{sens-auc-panfpl-min}.
+
+% =====================================================================================
+\section{Lista ampliada de algoritmos possíveis}
+Além do que está implementado, estes métodos podem entrar em versões futuras ou em artigos
+derivados. ``Agora'' = faz sentido com estes dados; ``futuro'' = exige outro tipo de dado ou
+desenho.
+
+\begin{longtable}{>{\raggedright}p{3.6cm}>{\raggedright}p{6.8cm}>{\raggedright\arraybackslash}p{3.6cm}}
+\toprule
+Método & Para que serviria aqui & Situação\\
+\midrule\endhead
+Nulo, logística $L_2$, $k$-NN Jaccard, RF (3 versões), boosting & Benchmark de classificação (O1) & implementado (\texttt{run/02})\\
+AUC por pares, probabilidades & Teste de homogeneização (O2) & implementado (\texttt{run/03})\\
+Importância, PDP, SHAP, IndVal.g & Espécies-chave (O3) & implementado (\texttt{run/04})\\
+Conditional inference forest (\texttt{cforest}, \texttt{partykit}) & Importância sem o viés do RF para variáveis com poucos valores distintos (Strobl 2007) & agora (em R)\\
+SVM linear/RBF & Mais um classificador de margem; pouco interpretável & agora, baixo ganho\\
+Naive Bayes de Bernoulli & Modelo de presença/ausência muito simples; bom baseline & agora, baixo ganho\\
+Ordenação baseada em modelo (\texttt{gllvm}) & Ordenação que modela os zeros e a detecção; alternativa à PCoA & agora\\
+\texttt{mvabund::manyglm} & Teste multivariado com GLM por espécie; diz quais espécies diferem & agora\\
+Modelos conjuntos de distribuição (HMSC) & Explicar coocorrências por ambiente e por associação entre espécies & futuro (variáveis ambientais)\\
+Generalized dissimilarity modelling (GDM) & Separar o efeito da distância geográfica do efeito do ambiente/perturbação & futuro (mais sítios)\\
+Modelos de ocupação & Corrigir detecção imperfeita (zero $\neq$ ausência) & futuro (visitas repetidas)\\
+Rarefação / cobertura amostral (iNEXT) & Mostrar se a amostragem foi suficiente em cada área & agora (descritivo)\\
+Redes neurais / deep learning & Não recomendado: $n=\res{n-points}$ é pequeno demais & não\\
+Visão computacional (CNN) & Identificar vespas por foto em monitoramento & futuro (imagens)\\
+\bottomrule
+\end{longtable}
+
+% =====================================================================================
+\section{Como ler cada figura do artigo}
+\begin{description}
+\item[Fig.~1 (composição)] Procure: a várzea isolada à esquerda; Pantanal (verde) dentro da nuvem
+do Cerrado (laranja). No painel (b), a linha ``Pantanal'' tem 1,00 com a várzea (nada em comum)
+e $\approx$0,57 com o Cerrado (tanto quanto dentro do próprio Pantanal).
+\item[Fig.~2 (desempenho)] Cada modelo é uma linha; pontos à direita da linha tracejada (acaso) são
+bons. As matrizes mostram onde ficam os erros: quase todos na célula Pantanal $\to$ Cerrado.
+Compare (b) e (c) para ver o efeito do balanceamento.
+\item[Fig.~3 (principal)] (a) Três pares: Pantanal--várzea e Cerrado--várzea no teto (AUC $\approx$1);
+Pantanal--Cerrado perto da linha 0,5. (b) No triângulo, os pontos verdes deitados na aresta
+Pantanal--Cerrado.
+\item[Fig.~4 (espécies)] (a) Quanto o modelo piora sem cada espécie (pontos cheios: $p<0{,}05$).
+(b) Onde cada espécie ocorre --- leia junto com (a): especialistas da várzea no topo; as
+compartilhadas (\taxon{A.~bequaerti}, \taxon{P.~ignobilis}) com importância baixa ou negativa.
+\item[Fig.~5 (dependência parcial)] Cada painel é uma espécie; as três linhas são as
+probabilidades das paisagens quando a espécie tem 0, 1 ou 2 registros.
+\item[Fig.~S1 (SHAP)] Cada ponto é um local de coleta; à direita de zero, a espécie empurra para
+aquela paisagem.
+\item[Fig.~S2 (robustez)] Se os pontos azuis ficam perto da linha de referência em todos os
+cenários, a conclusão não depende das escolhas analíticas.
+\end{description}
+
+% =====================================================================================
+\section{O que o aprendizado de máquina NÃO prova aqui}
+\begin{cuidado}
+\begin{itemize}[leftmargin=1.2em]
+\item \textbf{Causa.} O modelo mede semelhança; não diz \emph{por que} o Pantanal se parece com o
+Cerrado. Antropização, proximidade geográfica (\res{dist-pan-cer}~km, mesma bacia) e campanha de
+coleta (mesmo ano, meses vizinhos) produzem o mesmo padrão.
+\item \textbf{Generalização.} Com uma área por paisagem, o modelo reconhece \emph{áreas}. Não
+sabemos se reconheceria outra várzea ou outro trecho do Pantanal.
+\item \textbf{Ausências.} Zeros são não detecções de um método com viés (isca de fruta).
+\item \textbf{Precisão.} Com 11 pontos no Pantanal, os intervalos são largos; o artigo deve sempre
+mostrar os intervalos, nunca só o número.
+\end{itemize}
+Linguagem adequada: ``compatível com homogeneização'', ``sugere'', ``indistinguível para o
+modelo''. Evitar: ``prova'', ``comprova'', ``corrobora integralmente''.
+\end{cuidado}
+
+\paragraph{Desenho que permitiria testar a causa.} Várias áreas preservadas e várias antropizadas
+\emph{em cada bacia}, coletadas na mesma estação; então a pergunta vira ``o classificador treinado
+em áreas preservadas reconhece as antropizadas?'' com validação \emph{deixando uma área de fora}.
+
+% =====================================================================================
+\section{Glossário de equivalências}
+\begin{longtable}{>{\raggedright}p{4.2cm}>{\raggedright}p{4.2cm}>{\raggedright\arraybackslash}p{5.6cm}}
+\toprule
+Ecologia & Aprendizado de máquina & Comentário\\
+\midrule\endhead
+Ponto amostral & Exemplo, observação, linha & $n=\res{n-points}$\\
+Espécie & \emph{Feature}, variável preditora & $p=\res{n-species}$\\
+Paisagem / fitofisionomia & Classe, rótulo, \emph{target} & 3 classes\\
+Registro independente & Deduplicação & evita inflar colônias grandes\\
+Matriz espécie $\times$ local & Matriz de \emph{design} $\mathbf{X}$ & esparsa (muitos zeros)\\
+Dissimilaridade de Jaccard & Distância de Jaccard em vetores binários & usada no $k$-NN e na PCoA\\
+PCoA / NMDS & Redução de dimensionalidade (MDS) & PCoA = MDS clássico\\
+PERMANOVA & Teste de permutação de uma estatística de separação & mesmo raciocínio do teste do classificador\\
+Espécie indicadora & \emph{Feature} importante e interpretável & IndVal $\leftrightarrow$ importância\\
+Curva de resposta / tolerância & Dependência parcial (PDP) & \\
+Homogeneização biótica & Sobreposição de classes; AUC $\to$ 0,5 & o que medimos\\
+Pseudo-replicação & Vazamento por grupo; classe $=$ grupo & limitação principal\\
+Autocorrelação espacial & Dependência entre exemplos & CV com blocos\\
+Esforço amostral desigual & Mudança de distribuição (\emph{covariate shift}) & por isso só armadilhas suspensas\\
+Detecção imperfeita & Ruído de rótulo nas \emph{features} (falsos zeros) & \\
+\bottomrule
+\end{longtable}
+
+% =====================================================================================
+\section{Como rodar}
+\begin{verbatim}
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r run/requirements.txt
+# coloque o arquivo de campo em data/raw/dados_vespas.csv (ver data/README.md)
+WASPS_QUICK=1 python run/run_all.py     # teste rápido (~2 min)
+python run/run_all.py                   # análise completa (~40 min em 2 núcleos)
+git add paper data/results && git commit -m "Atualiza resultados" && git push
+\end{verbatim}
+Figuras vão para \texttt{paper/figures/}, números e tabelas para \texttt{paper/generated/}; no
+Overleaf o texto e os números se atualizam após o push.
+
+\end{document}

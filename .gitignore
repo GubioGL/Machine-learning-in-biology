@@ -32,6 +32,7 @@ paper/*.synctex.gz
 paper/*.toc
 paper/main.pdf
 
-# Large raw data: keep it out of git (see data/README.md), for example
-# data/raw/
+# Field data stay out of git until they are published (see data/README.md)
+data/raw/
 # *.pt
+paper/guia_ponte_ml_biologia.pdf

@@ -1,3 +1,47 @@
+# Lost signatures: machine learning and social-wasp assemblages of wetlands and savannas
+
+Artigo *Lost signatures*: aprendizado de máquina validado para medir a perda de identidade
+ecológica (homogeneização biótica) em assembleias de vespas sociais (Vespidae: Polistinae) de três
+áreas protegidas de Mato Grosso do Sul — várzea preservada (PEVRI), Pantanal antropizado (APA Baía
+Negra) e Cerrado (PN Serra da Bodoquena).
+
+**Pergunta:** a lista de vespas de um ponto identifica a paisagem de origem? O Pantanal antropizado
+ficou mais parecido com o Cerrado seco do que com a várzea preservada?
+
+## O que há aqui
+
+| onde | o quê |
+|---|---|
+| `paper/main.tex` | artigo v0.1 (Overleaf): introdução, métodos, resultados, discussão, apêndices com a matemática de cada algoritmo; comentários `%` em português dizem o que cada seção deve conter |
+| `paper/guia_ponte_ml_biologia.tex` | guia-ponte (não é o artigo): biologia para quem vem do ML, ML para quem vem da biologia, o que cada algoritmo faz e por que ajuda |
+| `paper/generated/` | números (`res_*.tex`) e tabelas (`tab_*.tex`) escritos pelos scripts e lidos pelo artigo |
+| `docs/relatorio_pesquisa.md` | revisão da literatura de alto impacto, diagnóstico dos dados e lista de algoritmos |
+| `src/` | `wasps.py` (dados), `community.py` (Jaccard, PCoA, PERMANOVA, PERMDISP, IndVal), `ml.py` (modelos, validação, testes), `report.py` (números e tabelas para o LaTeX) |
+| `run/01`–`05` | uma etapa da análise por script (ver abaixo); `run/run_all.py` roda tudo |
+| `data/` | `raw/` (dados de campo, fora do git) e `results/` (saídas em JSON/CSV) |
+
+## Como rodar a análise
+
+```bash
+pip install -r run/requirements.txt
+# copie o CSV de campo para data/raw/dados_vespas.csv (ver data/README.md)
+WASPS_QUICK=1 python run/run_all.py   # teste rápido, ~2 min
+python run/run_all.py                 # análise completa, ~40 min em 2 núcleos
+git add paper data/results && git commit -m "Atualiza resultados" && git push
+```
+
+| script | objetivo | figura / tabela |
+|---|---|---|
+| `01_community_description.py` | descrever: Jaccard, PCoA, PERMANOVA, PERMDISP, distâncias | Fig. 1, Tab. 1, Tab. 3 |
+| `02_classifier_benchmark.py` | O1: 7 classificadores, CV 5×50, testes de permutação | Fig. 2, Tab. 4 |
+| `03_homogenization_test.py` | O2: AUC por pares, bootstrap pareado, probabilidades | Fig. 3, Tab. 5 |
+| `04_species_interpretation.py` | O3: importância fora da amostra + Altmann, dependência parcial, SHAP, IndVal | Figs. 4–5, S1, Tab. S1 |
+| `05_sensitivity.py` | O4: blocos espaciais, n igual, sem espécies, hiperparâmetros, campanhas | Fig. S2, Tab. S2 |
+
+Depois do push, os números do texto (`\res{...}`) e as figuras se atualizam no Overleaf.
+
+---
+
 # Paper template: code, data and LaTeX, synced with Overleaf
 
 Template for a research paper whose figures come from code. The repository holds the code, the data
@@ -19,7 +63,8 @@ directions, so you can write in Overleaf and regenerate figures here.
    - **Projeto em branco:** o artigo inicial deste modelo vai para o Overleaf.
    - **Projeto com rascunho:** o rascunho vem para `paper/`, substituindo o artigo inicial.
 5. **Personalizar:** troque o `\documentclass` da revista em `paper/main.tex`. Depois apague os exemplos
-   (`src/analysis.py`, `run/example_figure.py`, `data/example/`) quando tiver o seu código.
+   (`src/analysis.py`, `run/example_figure.py`, `data/example/`) quando tiver o seu código
+   (neste repositório já foram apagados).
 
 Pronto. Daqui em diante cada push que mexe em `paper/` vai para o Overleaf. O que você escrever no
 Overleaf volta para cá a cada 3 horas, ou na hora com *Run workflow*.
@@ -50,16 +95,16 @@ save_figure(fig, "fig2_results")      # -> paper/figures/fig2_results.pdf (+ loc
 ```
 
 Then `\includegraphics{fig2_results.pdf}` in `paper/main.tex`, commit and push, and the figure appears in
-Overleaf. `run/example_figure.py` is a complete example.
+Overleaf. Any script in `run/` (e.g. `run/01_community_description.py`) is a complete example.
 
 Scripts start with a short header block that puts `src/` and `run/` on the import path and makes
-`data/...` paths relative to the repository root. Keep it in new scripts (copy it from the example), and
+`data/...` paths relative to the repository root. Keep it in new scripts (copy it from any script in `run/`), and
 `python run/<script>.py` works from any folder.
 
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r run/requirements.txt
-python run/example_figure.py
+python run/run_all.py
 ```
 
 ## How the Overleaf sync works

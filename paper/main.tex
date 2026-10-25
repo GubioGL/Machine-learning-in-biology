@@ -1,65 +1,953 @@
 % =====================================================================================
-% Starter manuscript. On the first Overleaf sync:
-%   - blank Overleaf project      -> this file goes to Overleaf;
-%   - Overleaf already has a draft -> the draft replaces this file (and references.bib).
+%  ASSINATURAS PERDIDAS  --  primeira versão (v0.1) gerada a partir do rascunho em Word
+%  "Assinaturas perdidas.docx" e reescrita na perspectiva de ML validado.
 %
-% Journal class: replace the \documentclass line, for example
-%   APS (PRA, PRL, ...): \documentclass[aps,pra,twocolumn,superscriptaddress,10pt]{revtex4-2}
-%                        (put \maketitle after the abstract, use \affiliation, drop \date)
-%   Elsevier:            \documentclass[preprint,12pt]{elsarticle}
-%   Springer Nature:     use the sn-jnl template from the journal's Overleaf page
+%  COMO ESTE ARQUIVO FUNCIONA
+%  - Texto do artigo em inglês (convenção do repositório, ver CLAUDE.md); os comentários (%),
+%    que explicam o que cada seção precisa conter, estão em português.
+%  - Números: \res{chave} imprime o valor calculado pelos scripts de run/ (arquivos
+%    paper/generated/res_*.tex). Rode `python run/run_all.py`, faça commit e push, e os números
+%    do texto se atualizam sozinhos no Overleaf. Uma chave que ainda não existe aparece em
+%    vermelho como [chave?].
+%  - Tabelas geradas pelos scripts entram com \inputtable{nome} (paper/generated/nome.tex).
+%  - \TODO{...} marca o que ainda depende dos autores; \showtodosfalse esconde todos.
+%  - Classe da revista: troque o \documentclass (ex.: Elsevier elsarticle; Springer sn-jnl;
+%    para Ecological Indicators / Journal of Insect Conservation / Ecological Informatics).
+%
+%  MENSAGEM CENTRAL (uma frase, deve aparecer no resumo, no fim da introdução e na conclusão)
+%    "A composição de vespas sociais identifica a paisagem de origem muito acima do acaso; a
+%     várzea preservada é inequivocamente separável, enquanto a área úmida antropizada do
+%     Pantanal é praticamente indistinguível da savana seca -- um padrão compatível com
+%     homogeneização biótica, mas que, com uma área por paisagem, não pode ser separado da
+%     proximidade geográfica e da campanha de coleta."
 % =====================================================================================
 \documentclass[11pt]{article}
 
 \usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{bm}
 \usepackage{booktabs}
 \usepackage{xcolor}
-\usepackage[numbers,sort&compress]{natbib}
+\usepackage{pdflscape}
+\usepackage{caption}
+\usepackage[round,sort&compress]{natbib}
+\usepackage{lineno}
 \usepackage{hyperref}
 
 \hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black, urlcolor=blue!50!black}
 \graphicspath{{figures/}}              % figures written by run/*.py land in paper/figures/
+\captionsetup{font=small, labelfont=bf}
+\linenumbers
 
 % Working notes: \showtodostrue -> \showtodosfalse hides every \TODO
 \newif\ifshowtodos \showtodostrue
 \newcommand{\TODO}[1]{\ifshowtodos\textcolor{red}{\textbf{[TODO:} #1\textbf{]}}\fi}
 
-\title{\TODO{Title of the paper}}
-\author{Gubio G. de Lima\thanks{\TODO{affiliation}. E-mail: \texttt{gubio.gomes@estudante.ufscar.br}}}
+% ---- numbers produced by run/*.py --------------------------------------------------
+\makeatletter
+\newcommand{\setres}[2]{\expandafter\def\csname res@#1\endcsname{#2}}
+\newcommand{\res}[1]{\ifcsname res@#1\endcsname\csname res@#1\endcsname\else\textcolor{red}{[#1?]}\fi}
+\makeatother
+\newcommand{\inputres}[1]{\IfFileExists{generated/#1.tex}{\input{generated/#1.tex}}{}}
+\newcommand{\inputtable}[1]{\IfFileExists{generated/#1.tex}{\input{generated/#1.tex}}%
+  {\TODO{run the scripts in run/ to generate #1}}}
+\inputres{res_01}\inputres{res_02}\inputres{res_03}\inputres{res_04}\inputres{res_05}
+
+% ---- notation ------------------------------------------------------------------------
+\newcommand{\Fpl}{\textsc{fpl}}
+\newcommand{\Pan}{\textsc{pan}}
+\newcommand{\Cer}{\textsc{cer}}
+\newcommand{\AUC}{\mathrm{AUC}}
+\newcommand{\taxon}[1]{\textit{#1}}
+
+% TÍTULO: precisa dizer o achado, não o método. Alternativas para discutir com o grupo:
+%  (a) "Lost signatures: validated machine learning reveals convergence between social-wasp
+%       assemblages of an anthropised wetland and a dry savanna"            <- atual
+%  (b) "Can machine learning tell a degraded wetland from a savanna? Social wasps as a test case"
+%  (c) "Indistinguishable assemblages: ..."  (mais forte; só se a robustez confirmar)
+\title{Lost signatures: validated machine learning reveals convergence between social-wasp
+assemblages of an anthropised wetland and a dry savanna}
+\author{Jo\~ao Marcos Gomes Leite \and Gubio G. de Lima\thanks{\TODO{affiliation}. E-mail:
+\texttt{gubio.gomes@estudante.ufscar.br}} \and Josu\'e Raizer \and \TODO{other authors, order and
+affiliations}}
 \date{\today}
 
 \begin{document}
 \maketitle
 
+% =====================================================================================
 \begin{abstract}
-\TODO{Abstract -- write it last.}
+% RESUMO (escrever por último; máx. ~250 palavras). Estrutura obrigatória, uma ou duas frases
+% cada: (1) contexto: homogeneização biótica apaga fronteiras e é difícil de medir;
+% (2) lacuna: classificadores usados sem validação rigorosa e sem teste direto da hipótese;
+% (3) o que fizemos: dados + ML validado (baselines, CV repetida, permutação, AUC por pares);
+% (4) três números-chave: acurácia balanceada vs. nulo; AUC Pan x Cer vs. Pan x Fpl; espécies;
+% (5) ressalva de desenho (1 área por paisagem; geografia e campanha);
+% (6) implicação para conservação/monitoramento.
+% NÃO usar "prova", "comprova", "corrobora integralmente".
+Biotic homogenisation erases the compositional boundaries between ecosystems, but it is difficult to
+measure from small biodiversity surveys. We asked whether social-wasp assemblages (Vespidae:
+Polistinae) identify the landscape they come from, and whether an anthropised wetland in the Pantanal
+has become less distinguishable from a dry savanna (Cerrado) than from a preserved floodplain, as
+homogenisation predicts. Using \res{n-records} independent records of \res{n-species} species at
+\res{n-points} points in three protected areas of Mato Grosso do Sul, Brazil, we compared seven
+classifiers under repeated cross-validation, permutation tests and class-imbalance corrections, and
+tested homogenisation directly through the separability (AUC) of each pair of landscapes. The best
+model reached a balanced accuracy of \res{best-balacc}, far above the null expectation. The floodplain
+was almost perfectly separable from the Pantanal (AUC = \res{brf-auc-panfpl}), whereas the Pantanal
+and the Cerrado could barely be told apart (AUC = \res{brf-auc-pancer}; difference
+\res{brf-dauc}). The convergence rested on a few widespread swarm-founding species, chiefly
+\taxon{Agelaia bequaerti}, and held across \res{sens-n-scenarios} sensitivity scenarios. Because each
+landscape is a single area, and the Pantanal and Cerrado sites are geographically closer and were
+sampled in the same year, the pattern is compatible with, but not proof of, anthropogenic
+homogenisation. We argue that validated, imbalance-aware classifiers turn ``the model confused two
+habitats'' into a quantitative, testable measure of lost ecological identity.
+\TODO{revise after the final run; check every number against data/results/}
 \end{abstract}
 
+\noindent\textbf{Keywords:} biotic homogenisation; random forest; classification; Pantanal;
+Cerrado; Polistinae; bioindicators; cross-validation
+
+% =====================================================================================
 \section{Introduction}\label{sec:intro}
-\TODO{Context, gap, contribution, outline.} Citations come from \texttt{references.bib}, for
-example~\cite{example2024}.
+% OBJETIVO DA SEÇÃO: levar o leitor, em funil, de "ecossistemas têm identidade" até a pergunta
+% H2, de modo que no fim ele já saiba exatamente o que será testado e como.
+% Um parágrafo = uma ideia. Ordem:
+%  P1 Identidade ecológica + homogeneização biótica (o problema biológico).
+%  P2 Por que é difícil de medir (dados esparsos, raros, não linearidade) e o que o ML oferece.
+%  P3 O requisito de rigor: ML como instrumento de medida só vale com validação (baselines,
+%     permutação, desbalanceamento, dependência espacial). Isso diferencia nosso artigo.
+%  P4 Sistema de estudo: várzea preservada x Pantanal antropizado x Cerrado seco.
+%  P5 Vespas sociais como bioindicadoras (biologia mínima que justifica a escolha).
+%  P6 Pergunta, objetivos O1-O4 e hipóteses H1-H2 COM predições quantitativas.
+% Dica: o rascunho em Word tinha P1 sobre ML; aqui o P1 abre com a BIOLOGIA (o leitor da revista
+% de ecologia precisa primeiro do problema; o ML é a ferramenta).
 
+\paragraph{Ecological identity and its loss.}
+% P1: definir identidade (combinação característica de espécies) e homogeneização (aumento da
+% similaridade entre locais por perda de especialistas e expansão de generalistas). Citar
+% McKinney & Lockwood 1999; Olden & Rooney 2006; exemplos recentes em insetos (Ogan 2022,
+% Fisogni 2025) e um exemplo de alto impacto (Aulus-Giacosa 2024, Nature Communications).
+Every ecosystem harbours a characteristic combination of species, so that the list of species
+recorded at a site carries information about the environment it came from. Human disturbance can
+erode this identity: specialists disappear, a few tolerant generalists spread, and assemblages of
+formerly distinct places become more similar to each other, a process known as biotic homogenisation
+\citep{mckinney1999,olden2006}. Homogenisation reduces beta diversity, the component of biodiversity
+that conservation planning relies on to prioritise distinct places \citep{socolar2016}, and it has
+now been documented in insect groups as different as grasshoppers \citep{ogan2022}, bees
+\citep{fisogni2025} and ants at a global scale \citep{aulus2024}, against a background of
+widespread insect decline \citep{wagner2021}.
+
+\paragraph{Why it is hard to measure, and what machine learning offers.}
+% P2: matrizes de comunidade (muitos zeros, poucas espécies comuns, relações não lineares).
+% Testes clássicos (PERMANOVA) dizem SE os grupos diferem, mas não QUANTO um grupo se tornou
+% indistinguível de outro, nem em que direção. Classificadores respondem a outra pergunta:
+% "dado só a lista de espécies, consigo dizer de onde veio a amostra?" -> a separabilidade é a
+% própria medida de identidade. Citar Cutler 2007, Pichler & Hartig 2023, Tuia 2022,
+% e um parágrafo curto sobre ML em biologia de alto impacto (AlphaFold, Wang 2023).
+Detecting homogenisation is an analytical challenge. Community data are sparse, dominated by a few
+common and many rare species, and their responses to the environment are rarely linear
+\citep{cutler2007,legendre2012}. Classical multivariate tests such as PERMANOVA \citep{anderson2001}
+tell whether the composition of groups differs, but not how far one group has become
+indistinguishable from another, nor in which direction. Supervised classifiers answer a
+complementary question: given only the species recorded at a site, can its landscape of origin be
+recovered? If it can, the landscape has an identity; if two landscapes are systematically confused,
+their identities overlap. Tree-based ensembles such as random forests \citep{breiman2001} are well
+suited to this question because they handle zero-inflated predictors and interactions without
+distributional assumptions \citep{cutler2007,evans2011}, and they remain the workhorse of machine
+learning in ecology even as deep learning transforms image- and sequence-based biology
+\citep{pichler2023,tuia2022,wang2023,jumper2021,hoye2021}.
+
+\paragraph{Machine learning as a measuring instrument requires validation.}
+% P3: AQUI está a contribuição metodológica. Com n pequeno, a acurácia de um único modelo pode
+% ser otimista ou pessimista por acaso; classes desbalanceadas empurram predições para a classe
+% maior (o que imitaria "homogeneização"); pontos vizinhos inflam a acurácia (Ploton 2020;
+% Roberts 2017). Checklists REFORMS (Science Advances) e DOME (Nature Methods).
+% Frase de fechamento: "we treat the classifier as a measuring instrument and calibrate it".
+A classifier is only a measuring instrument if its readings are calibrated. With small samples, a
+single accuracy estimate can be inflated or deflated by chance; with unequal class sizes, errors are
+pushed towards the larger classes, which can mimic the very confusion one wishes to interpret
+\citep{chen2004,valavi2021}; and when nearby samples share information, random cross-validation can
+greatly overstate predictive skill \citep{roberts2017,ploton2020}. Consensus guidelines for
+machine-learning-based science therefore ask for explicit baselines, uncertainty and leakage control
+\citep{kapoor2024,walsh2021}. Here we follow those guidelines and, instead of reading homogenisation
+from the off-diagonal cells of a single confusion matrix, we test it directly as a difference in
+separability between pairs of landscapes.
+
+\paragraph{Study system.}
+% P4: descrever o "laboratório natural". Áreas úmidas dependem do pulso de inundação (Junk
+% 1989) e deveriam ter faunas mais parecidas entre si do que com áreas secas. Apresentar:
+% PEVRI (várzea preservada, proteção integral), APA Baía Negra (Pantanal, uso sustentável,
+% antropizada -- DESCREVER QUAL antropização: pecuária, supressão, urbanização de Ladário?),
+% PN Serra da Bodoquena (planalto seco, Cerrado). Citar Leite et al. (companion) para detalhes.
+% Já antecipar que as três áreas estão a distâncias diferentes (Pan-Cer mais próximas).
+Floodplain wetlands are structured by the flood pulse \citep{junk1989}, which creates habitats
+that differ sharply from the surrounding uplands; wetlands are therefore expected to share more of
+their fauna with each other than with dry savannas. Mato Grosso do Sul, Brazil, offers three
+protected areas that span this contrast: a preserved floodplain on the Ivinhema River (Várzeas do Rio
+Ivinhema State Park), an anthropised wetland of the Pantanal (Baía Negra Environmental Protection
+Area) and a dry plateau dominated by Cerrado vegetation (Serra da Bodoquena National Park)
+\citep{leite_companion}. \TODO{describe the land use and disturbance history at Baía Negra in one or
+two sentences (biologists).}
+
+\paragraph{Social wasps as biological sensors.}
+% P5: por que vespas? (a) ninhos dependem de substrato vegetal, água, fibras e presas;
+% (b) Epiponini fundam colônias por enxameagem e fazem ninhos grandes -> sensíveis à estrutura
+% do habitat (Richards 1978; Jeanne 1991); (c) respondem à sazonalidade/microclima (Jacques
+% 2023) e à conservação da vegetação (De Castro 2021; Francisco 2023; Leite 2026).
+Social wasps (Vespidae: Polistinae) are promising sensors of habitat condition. Their colonies
+depend on vegetation for nest substrate, on plant fibres and water for nest building, and on
+arthropod prey, and the swarm-founding Epiponini build large, long-lived nests that require
+structurally complex vegetation \citep{richards1978,jeanne1991}. Polistine assemblages respond to
+vegetation type and conservation status \citep{decastro2021,francisco2023,leite2026} and to the
+seasonal drought that shapes Neotropical dry environments \citep{jacques2023}.
+
+\paragraph{Aims and hypotheses.}
+% P6: FECHAMENTO. Escrever objetivos numerados (O1-O4) que correspondem 1:1 às subseções de
+% Métodos e Resultados, e hipóteses com predições numéricas e falseáveis.
+We asked two questions: (i) does the composition of the social-wasp assemblage identify the
+landscape of origin above chance, and (ii) is the assemblage of the anthropised wetland less
+distinguishable from the dry savanna than from the preserved wetland? We pursued four objectives:
+(O1) to quantify how well wasp composition predicts the landscape, against explicit baselines and
+with permutation tests; (O2) to test homogenisation directly through the separability of pairs of
+landscapes; (O3) to identify the species that draw or blur the boundaries; and (O4) to evaluate the
+robustness of these conclusions to class imbalance, spatial dependence, data encoding, model
+settings and sampling campaign. We predicted that (H1) the preserved floodplain has a strong
+identity, being separable from both other landscapes ($\AUC > 0.9$), and that (H2) the Pantanal
+assemblage has converged on the Cerrado, so that $\AUC_{\Pan\times\Cer} < \AUC_{\Pan\times\Fpl}$
+and Pantanal samples receive a higher predicted probability of Cerrado than of floodplain.
+
+% =====================================================================================
 \section{Methods}\label{sec:methods}
-\TODO{Model, data and procedure.}
+% OBJETIVO: permitir reprodução integral. Seguir DOME (Dados, Otimização, Modelo, Avaliação) e
+% declarar TODAS as decisões analíticas e POR QUE foram tomadas. Cada subseção de análise
+% corresponde a um objetivo (O1-O4) e a um script de run/. A Tabela 2 faz esse mapa.
 
+\subsection{Study areas and field sampling}\label{sec:areas}
+% Conteúdo: coordenadas, fitofisionomia, clima, histórico de uso de cada área (1 frase cada);
+% desenho: armadilhas atrativas suspensas (quantas por ponto, iscas: goiaba, laranja,
+% maracujá), quatro dias de exposição; DATAS de coleta por área (Tabela 1) -- é obrigatório
+% declarar que as áreas foram amostradas em meses e anos diferentes.
+% Distâncias entre áreas (centroides): Pan-Cer \res{dist-pan-cer} km etc.
+Wasps were sampled in the three protected areas described above (Table~\ref{tab:sampling}). At each
+sampling point, attractive traps baited with guava, orange or passion-fruit juice were suspended in
+the vegetation and exposed for four days \TODO{number of traps per point, height, distance between
+points; cite the field protocol in \citet{leite_companion}}. Active collection with entomological
+nets and Malaise traps was also carried out in some areas; these data
+(\res{n-individuals-all} individuals of \res{n-species-all} species in total) are used only to
+describe the regional species pools, because sampling effort differed among areas. The areas lie at
+different distances from each other: the Pantanal and Cerrado sites are \res{dist-pan-cer}~km apart,
+whereas the floodplain lies \res{dist-pan-fpl}~km from the Pantanal and \res{dist-cer-fpl}~km from the
+Cerrado site (distances between point centroids). Sampling campaigns also differed among areas
+(Table~\ref{tab:sampling}).
+
+\begin{table}[t]
+\centering
+\caption{Sampling design. Points with attractive suspended traps per landscape, sampling campaigns
+(year-month, with the number of points), independent records (species $\times$ point $\times$ date),
+species and mean number of species per point.}
+\label{tab:sampling}
+\resizebox{\textwidth}{!}{\inputtable{tab_sampling}}
+\end{table}
+
+\subsection{From captures to a site-by-species matrix}\label{sec:matrix}
+% Conteúdo: definição de registro independente (por que: várias operárias da mesma colônia);
+% n final (pontos por paisagem, registros, espécies); excluir/declarar pontos sem captura;
+% matriz sem transformação (árvores são invariantes a transformações monotônicas).
+Because a single trap can capture many workers of the same colony, counts of individuals measure
+the proximity of a nest rather than the occupancy of a species. We therefore converted the
+\res{n-individuals-suspension} individuals captured in suspended traps into independent records,
+counting each combination of species, point and date once. The resulting matrix
+$\mathbf{X}\in\mathbb{N}^{n\times p}$ has $n=\res{n-points}$ points (\res{n-floodplain} in the
+floodplain, \res{n-pantanal} in the Pantanal and \res{n-cerrado} in the Cerrado), $p=\res{n-species}$
+species and \res{n-records} records; the response $y_i\in\{\Fpl,\Pan,\Cer\}$ is the landscape of
+point $i$. Record frequencies were used without transformation; a presence--absence version was
+analysed as a sensitivity check. \TODO{confirm that no sampling point had zero captures (points
+without captures are absent from the raw file).}
+
+\subsection{Analytical strategy}\label{sec:strategy}
+% Tabela 2: a "espinha" do artigo. Cada objetivo -> pergunta -> análise -> saída -> script.
+% Isso deixa o leitor (e o revisor) ver que cada análise tem um propósito.
+The analysis was organised in four steps, one per objective (Table~\ref{tab:strategy}). All
+analyses were run in Python with scikit-learn \citep{pedregosa2011} and imbalanced-learn
+\citep{lemaitre2017}; the community statistics were implemented following their original
+definitions and checked against the values reported for the same data in R
+\citep{leite_companion}. Code, generated tables and the exact settings are available in the project
+repository.
+
+\begin{table}[t]
+\centering
+\caption{Objectives, questions and analyses. Each step corresponds to one script of the repository.}
+\label{tab:strategy}
+\small
+\begin{tabular}{p{1.1cm}p{4.4cm}p{5.2cm}p{3.6cm}}
+\toprule
+Step & Question & Analysis & Output\\
+\midrule
+Descr. & Does composition differ among landscapes? & Jaccard PCoA, PERMANOVA, PERMDISP
+(\texttt{01}) & Fig.~\ref{fig:community}, Table~\ref{tab:permanova}\\
+O1 & Does composition identify the landscape above chance? & Seven classifiers, repeated
+stratified CV, permutation tests (\texttt{02}) & Fig.~\ref{fig:benchmark},
+Table~\ref{tab:benchmark}\\
+O2 & Is the Pantanal closer to the Cerrado than to the floodplain? & Pairwise classifiers, AUC,
+paired bootstrap; class probabilities; Jaccard distances (\texttt{03}) &
+Fig.~\ref{fig:homog}, Table~\ref{tab:pairwise}\\
+O3 & Which species draw or blur the boundaries? & Out-of-fold permutation importance with label
+permutation $p$-values, partial dependence, SHAP, IndVal.g (\texttt{04}) &
+Figs.~\ref{fig:importance}--\ref{fig:pdp}, Table~S1\\
+O4 & Are the conclusions robust? & Spatial blocks, encoding, singletons, equal $n$, removal of
+the dominant shared species, hyperparameters, campaign checks (\texttt{05}) & Table~S2,
+Fig.~S2\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Community composition}\label{sec:mcommunity}
+% Conteúdo: Jaccard binário; PCoA; PERMANOVA global e par a par (Holm); PERMDISP (para
+% separar diferença de centroide de diferença de dispersão). Apêndice A tem as fórmulas.
+Compositional dissimilarity between points was measured with the Jaccard index on presence--absence
+data and represented by principal coordinates analysis \citep[PCoA;][]{gower1966}. Differences among
+landscapes were tested with PERMANOVA \citep{anderson2001} with \res{nperm-community} permutations,
+followed by pairwise PERMANOVAs with Holm-adjusted $p$-values, and differences in multivariate
+dispersion with PERMDISP \citep{anderson2006} (Appendix~\ref{app:community}).
+
+\subsection{Classifiers (O1)}\label{sec:mclassifiers}
+% Conteúdo: lista dos modelos com o PAPEL de cada um (nulo, baseline, principal, robustez).
+% Hiperparâmetros FIXADOS a priori (sem tuning) -> justificar (Varma & Simon 2006: evita
+% otimismo e dispensa CV aninhada; sensibilidade em O4). Mencionar a replicação do RF do
+% rascunho (ranger, 1000 árvores, mtry 4, OOB = \res{oob-acc-draft-replication}).
+We compared seven classifiers of increasing flexibility (Appendices~\ref{app:logistic}--\ref{app:boosting}):
+(i) a null model that predicts the most frequent class of the training data, the reference for
+``no biological information''; (ii) a multinomial logistic regression with $L_2$ penalty on
+standardised frequencies, a linear and interpretable baseline; (iii) a $k$-nearest-neighbour
+classifier ($k=5$) with Jaccard distance, the predictive counterpart of similarity-based community
+analysis; (iv) an unweighted random forest, equivalent to the model of the first analysis of these
+data (\citealp{wright2017}; out-of-bag accuracy \res{oob-acc-draft-replication}); (v) a random forest
+with class weights inversely proportional to class frequency; (vi) a balanced random forest, in
+which every tree is grown on a bootstrap sample with the same number of points per class
+\citep{chen2004}; and (vii) gradient-boosted trees of depth two. Forests had \res{ntrees} trees and
+$\lfloor\sqrt{p}\rfloor$ candidate species per split. All hyperparameters were fixed a priori at
+standard values rather than tuned, which keeps the cross-validated estimates free of selection
+optimism \citep{varma2006}; sensitivity to them was evaluated in O4. The balanced random forest was
+designated in advance as the main model, because it removes the bias towards large classes that
+could otherwise manufacture the confusion predicted by H2.
+
+\subsection{Validation and inference (O1)}\label{sec:mvalidation}
+% Conteúdo: CV estratificada 5-fold repetida 50x; mesmas partições para todos os modelos
+% (comparações pareadas); métricas no conjunto agregado de predições fora da amostra de cada
+% repetição; métricas: acurácia balanceada (principal), F1 macro, kappa, log-loss, recall por
+% classe e taxa Pan->Cer; IC = percentis 2,5-97,5 sobre repetições; teste de permutação.
+% Explicar POR QUE acurácia balanceada (classe Pantanal menor).
+Performance was estimated by stratified five-fold cross-validation repeated \res{nrep} times. The
+same partitions were used for every model, so that differences between models are paired. In each
+repetition every point is predicted once by a model that did not see it, and metrics were computed
+on these pooled out-of-fold predictions (Appendix~\ref{app:validation}). The primary metric was
+balanced accuracy, the mean of the per-class recalls \citep{brodersen2010}, which, unlike overall
+accuracy, is not inflated by the larger classes; we also report macro-averaged $F_1$, Cohen's
+$\kappa$ \citep{cohen1960}, the multiclass log-loss, the recall of each landscape and the proportion
+of Pantanal points predicted as Cerrado. Intervals are the 2.5 and 97.5 percentiles over
+repetitions. Whether a model performed better than chance was tested by permuting the landscape
+labels and repeating the whole cross-validation \citep{ojala2010}, with \res{nperm-cheap}
+permutations for the fast models and \res{nperm-forest} for the forests.
+
+\subsection{Direct test of homogenisation (O2)}\label{sec:mhomog}
+% Conteúdo: CENTRAL. Classificador binário por par de paisagens (BRF e logística), AUC fora da
+% amostra (média de 20 repetições de CV), IC por bootstrap estratificado, diferença
+% Delta = AUC(Pan x Fpl) - AUC(Pan x Cer) por bootstrap PAREADO (pontos do Pantanal
+% reamostrados uma vez para os dois AUCs). Complementos: probabilidades das 3 classes para os
+% pontos do Pantanal (Wilcoxon pareado) e o análogo sem modelo (distância de Jaccard média do
+% ponto do Pantanal às outras áreas). Explicar a interpretação: AUC 0,5 = indistinguíveis.
+To test H2 we fitted, for every pair of landscapes, a binary classifier using only the points of
+that pair, and measured its out-of-fold separability with the area under the ROC curve,
+\[
+\AUC_{a\times b} = P\!\left(\hat s(\mathbf{x}_a) > \hat s(\mathbf{x}_b)\right),
+\]
+the probability that a randomly chosen point of landscape $a$ receives a higher score than one of
+landscape $b$ \citep{hanley1982}. An AUC of 0.5 means that the two assemblages are
+indistinguishable to the model and an AUC of 1 that they are perfectly separable. Scores were
+averaged over \res{nrep-pairwise} repetitions of five-fold cross-validation, and uncertainty was
+obtained with \res{nboot} stratified bootstrap resamples of the points \citep{efron1993}. H2 predicts
+$\Delta = \AUC_{\Pan\times\Fpl} - \AUC_{\Pan\times\Cer} > 0$; because both AUCs involve the same
+Pantanal points, $\Delta$ was bootstrapped in a paired way, resampling the Pantanal points once for
+both terms (Appendix~\ref{app:auc}). The test was run with the balanced random forest and repeated
+with the logistic regression. As complementary evidence we compared, for each Pantanal point, the
+out-of-fold probabilities of Cerrado and floodplain given by the three-class model (one-sided
+Wilcoxon signed-rank test), and the model-free mean Jaccard dissimilarity of each Pantanal point to
+the Cerrado and to the floodplain points.
+
+\subsection{Species that define the boundaries (O3)}\label{sec:mspecies}
+% Conteúdo: importância por permutação calculada SÓ em pontos de teste (fora da amostra),
+% p-valor por permutação dos rótulos (Altmann 2010); dependência parcial (curva de resposta);
+% SHAP (contribuição por ponto); IndVal.g (ponte com ecologia). Lembrar a limitação de
+% importância com espécies correlacionadas (Strobl 2007).
+The contribution of each species was measured by out-of-fold permutation importance: within each
+test fold, the records of one species were shuffled among the held-out points and the resulting drop
+in pooled balanced accuracy was recorded (\res{nrep-importance} repetitions). Its significance was
+assessed by recomputing the importances after permuting the landscape labels
+\citep[\res{nperm-importance} permutations;][]{altmann2010}, which corrects the known biases of
+impurity-based importance \citep{strobl2007}. The direction of each species' effect was described
+by partial dependence \citep{friedman2001}, the average predicted probability of each landscape when
+the species' frequency is set to a given value in every point, and by SHAP values, which split each
+individual prediction into additive species contributions \citep{lundberg2017,lundberg2020}. Because
+partial dependence of an unweighted forest can follow the larger class, we report it for both the
+balanced and the unweighted forests. Finally, the group-equalised indicator value IndVal.g
+\citep{dufrene1997,decaceres2009} provided the conventional community-ecology view of the same
+question (Appendix~\ref{app:species}).
+
+\subsection{Robustness (O4)}\label{sec:mrobust}
+% Conteúdo: cada cenário muda UMA decisão; listar e justificar. Explicar em especial:
+% blocos espaciais (Roberts 2017), n igual (11 por paisagem), remoção de A. bequaerti (o sinal
+% de convergência depende de uma espécie?), e as checagens de campanha: PERMANOVA entre
+% campanhas dentro da várzea; transferência entre campanhas; probabilidades por campanha
+% no Pantanal.
+Each robustness scenario changed a single analytical decision and re-estimated balanced accuracy,
+Pantanal recall, the Pantanal-to-Cerrado error rate and the two pairwise AUCs: (i) spatially blocked
+cross-validation, in which the points of each landscape were grouped into three spatial clusters and
+whole clusters were held out \citep{roberts2017}; (ii) presence--absence instead of frequencies;
+(iii) removal of species recorded at a single point; (iv) \res{sens-nsub} random subsamples with the
+same number of points per landscape; (v) removal of \taxon{Agelaia bequaerti}, the dominant species
+shared by the Pantanal and the Cerrado; and (vi--viii) alternative numbers of candidate species per
+split and minimum leaf size. Because the landscapes were sampled in different campaigns, we also
+quantified compositional change among campaigns within the floodplain (PERMANOVA), tested whether
+floodplain points of a held-out campaign were still recognised by a model trained on the other
+campaigns, and compared the predicted probabilities of Pantanal points from its two campaigns.
+
+\subsection{Reporting}\label{sec:reporting}
+% Tabela-resumo DOME (Walsh 2021) -- muitas revistas pedem. Pode ir para o material suplementar.
+The study is summarised following the DOME recommendations for supervised machine learning in
+biology \citep{walsh2021} in Appendix~\ref{app:dome}.
+
+% =====================================================================================
 \section{Results}\label{sec:results}
-Figure~\ref{fig:example} is produced by \texttt{run/example\_figure.py}, which writes it directly into
-\texttt{paper/figures/}; a new run followed by a push updates it here and in Overleaf.
+% OBJETIVO: responder O1 -> O4 NA ORDEM, cada parágrafo abre com a frase-resultado (o que
+% aprendemos), seguida dos números e da figura/tabela. Sem interpretação longa (vai para a
+% Discussão). Figuras: 1 composição; 2 desempenho; 3 (PRINCIPAL) homogeneização; 4 importância;
+% 5 dependência parcial. Suplemento: S1 tabela de espécies; S2 robustez; Fig. S1 SHAP; S2 robustez.
+% ATENÇÃO: as frases qualitativas abaixo foram escritas a partir da execução de outubro/2026;
+% se uma nova execução mudar o sentido de algum resultado, reescreva a frase (os números
+% mudam sozinhos, as palavras não).
+
+\subsection{Composition of the assemblages}\label{sec:rcomposition}
+% Mensagem: a várzea é composicionalmente separada; Pantanal e Cerrado se sobrepõem
+% (PERMANOVA par a par não significativa; PERMDISP não significativa -> não é só dispersão).
+Assemblage composition differed among landscapes (PERMANOVA pseudo-$F=\res{permanova-F}$,
+$R^2=\res{permanova-R2}$, $p$~\res{permanova-p}; Table~\ref{tab:permanova}). The floodplain was
+compositionally isolated: its points shared, on average, almost no species with the other two areas
+(mean Jaccard dissimilarity \res{diss-pan-fpl} to the Pantanal and \res{diss-cer-fpl} to the Cerrado),
+and only \res{shared-pan-fpl-suspension} species was recorded by suspended traps in both the
+floodplain and the Pantanal. In contrast, Pantanal and Cerrado points overlapped in the ordination
+(Fig.~\ref{fig:community}a); their mean dissimilarity (\res{diss-pan-cer}) was similar to the
+dissimilarity among points within each of them (\res{diss-within-pan} and \res{diss-within-cer}), and
+the pairwise PERMANOVA did not separate them ($R^2=\res{permanova-pancer-R2}$,
+$p_{\mathrm{Holm}}$~\res{permanova-pancer-padj}). Multivariate dispersion did not differ significantly
+among landscapes (PERMDISP $F=\res{permdisp-F}$, $p$~\res{permdisp-p}).
+\TODO{species pools with all methods: Jaccard Pan--Cer \res{pool-jac-pan-cer}, Pan--Fpl
+\res{pool-jac-pan-fpl}, Cer--Fpl \res{pool-jac-cer-fpl}: decide whether to report (it nuances the
+picture: with all methods the Pantanal shares more species with the floodplain than the Cerrado does).}
 
 \begin{figure}[t]
-  \centering
-  \includegraphics[width=0.6\linewidth]{example.pdf}
-  \caption{Example figure: damped oscillation (line) and noisy measurements (points).}
-  \label{fig:example}
+\centering
+\includegraphics[width=\linewidth]{fig1_community.pdf}
+\caption{Composition of social-wasp assemblages in the three landscapes. (a) Principal coordinates
+analysis of Jaccard dissimilarities between sampling points (ellipses: 95\% normal-theory regions;
+points slightly jittered because several share identical species lists). (b) Mean Jaccard
+dissimilarity between points of different landscapes (off-diagonal) and within landscapes
+(diagonal).}
+\label{fig:community}
 \end{figure}
 
-\section{Conclusions}\label{sec:conclusions}
-\TODO{}
+\begin{table}[t]
+\centering
+\caption{PERMANOVA of Jaccard dissimilarities among landscapes, pairwise tests (Holm-adjusted) and
+test of homogeneity of multivariate dispersion (PERMDISP).}
+\label{tab:permanova}
+\inputtable{tab_permanova}
+\end{table}
 
-\bibliographystyle{unsrtnat}
+\subsection{The assemblage identifies the landscape (O1)}\label{sec:rO1}
+% Mensagem: todos os modelos superam o nulo e o teste de permutação; o melhor alcança X.
+% A várzea é reconhecida quase sempre; o Pantanal é a classe difícil, e seu erro vai quase todo
+% para o Cerrado. O balanceamento muda a taxa de erro do Pantanal (comparar rf_default vs brf):
+% parte da "confusão" do rascunho era efeito do desbalanceamento -- dizer isso com clareza.
+Wasp composition identified the landscape of origin well above chance (Fig.~\ref{fig:benchmark};
+Table~\ref{tab:benchmark}). Mean balanced accuracy ranged from \res{worst-balacc} to
+\res{best-balacc} (lowest: \res{worst-model}; highest: \res{best-model}), against
+\res{null-prior-balacc} for the null model, and all four models submitted to label-permutation tests exceeded their null
+distributions (balanced random forest: $p$~\res{brf-pperm}). The linear logistic regression did as
+well as the forests, which indicates that the signal lies mainly in which species are present
+rather than in complex interactions among them. The floodplain was recognised almost without error
+(recall \res{brf-recall-fpl} with the balanced random forest). The Pantanal and the Cerrado, in
+contrast, were confused with each other: depending on the model, \res{pan-to-cer-min} to
+\res{pan-to-cer-max} of the Pantanal points were assigned to the Cerrado, and at most
+\res{pan-to-fpl-max} to the floodplain. How this confusion looked depended on class balancing. The
+unweighted forest of the first analysis favoured the larger class: it recovered
+\res{rf-default-recall-cer} of the Cerrado points but only \res{rf-default-recall-pan} of the Pantanal
+points, sending \res{rf-default-pan-to-cer} of them to the Cerrado and only \res{rf-default-cer-to-pan}
+of the Cerrado points to the Pantanal, so that the Pantanal seemed to be absorbed by the Cerrado. With
+balanced classes the confusion became mutual: the balanced random forest sent \res{brf-pan-to-cer} of
+the Pantanal points to the Cerrado and \res{brf-cer-to-pan} of the Cerrado points to the Pantanal,
+which is what two indistinguishable assemblages should produce. The $k$-NN classifier, which copies
+the landscape of the most similar points and is the most sensitive to class size, sent
+\res{knn-pan-to-cer} of the Pantanal points to the Cerrado.
+% CONFERIR após cada execução: a frase acima vale se a confusão do RF não ponderado for assimétrica
+% (rf-default-pan-to-cer >> rf-default-cer-to-pan) e a do BRF for mais simétrica.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig2_benchmark.pdf}
+\caption{Predictive performance. (a) Out-of-fold balanced accuracy of each classifier over
+\res{nrep} repetitions of stratified five-fold cross-validation (dots: repetitions; black: mean and
+95\% interval; $p$: label-permutation test; dashed line: chance). (b, c) Confusion matrices
+(mean counts over repetitions and row percentages) of the unweighted random forest used in the first
+analysis and of the balanced random forest.}
+\label{fig:benchmark}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Performance of the classifiers (means over \res{nrep} repetitions of stratified five-fold
+cross-validation; 95\% interval for balanced accuracy). Pan.$\to$Cer.: proportion of Pantanal points
+predicted as Cerrado. $p_{\mathrm{perm}}$: label-permutation test of balanced accuracy.}
+\label{tab:benchmark}
+\resizebox{\textwidth}{!}{\inputtable{tab_benchmark}}
+\end{table}
+
+\subsection{The Pantanal assemblage has converged on the Cerrado (O2)}\label{sec:rO2}
+% Mensagem PRINCIPAL do artigo. Ordem: AUC Pan x Fpl ~ 1 (identidade da várzea = H1);
+% AUC Pan x Cer ~ 0,5-0,6 com IC que inclui 0,5 (indistinguíveis); Delta com IC acima de 0
+% (H2); mesmo resultado com a logística (não depende do algoritmo); probabilidades (Fig. 3b:
+% os pontos do Pantanal ficam na aresta Pantanal-Cerrado do triângulo); análogo de Jaccard.
+The pairwise test supported both hypotheses (Fig.~\ref{fig:homog}; Table~\ref{tab:pairwise}). The
+Pantanal was perfectly separable from the floodplain ($\AUC_{\Pan\times\Fpl}$ = \res{brf-auc-panfpl}),
+and so was the Cerrado ($\AUC_{\Cer\times\Fpl}$ = \res{brf-auc-cerfpl}), confirming the strong identity
+of the preserved wetland (H1). By contrast, the Pantanal and the Cerrado were barely distinguishable
+($\AUC_{\Pan\times\Cer}$ = \res{brf-auc-pancer}), and the bootstrap interval of this AUC included 0.5.
+The difference between the two separabilities was large and its interval excluded zero
+($\Delta$ = \res{brf-dauc}, bootstrap $P(\Delta\le 0)$~\res{brf-dauc-p}), and the logistic regression
+led to the same conclusion ($\AUC_{\Pan\times\Cer}$ = \res{logistic-auc-pancer};
+$\Delta$ = \res{logistic-dauc}). In the three-class model, Pantanal points received on average a
+probability of \res{pan-pcer} of belonging to the Cerrado and only \res{pan-pfpl} of belonging to the
+floodplain (Wilcoxon $p$~\res{pan-wilcoxon-p}), so that they lie along the Pantanal--Cerrado edge of
+the probability simplex (Fig.~\ref{fig:homog}b). The same pattern appears without any model:
+\res{pan-closer-cer} Pantanal points were closer, in Jaccard dissimilarity, to the Cerrado points
+than to the floodplain points (mean \res{pan-jac-cer} versus \res{pan-jac-fpl}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig3_homogenization.pdf}
+\caption{Direct test of homogenisation. (a) Separability (out-of-fold AUC) of each pair of
+landscapes for the balanced random forest and the logistic regression; violins: \res{nboot}
+bootstrap resamples; bars: 95\% intervals. An AUC of 0.5 means the two assemblages cannot be told
+apart. (b) Out-of-fold probabilities of the three landscapes for every point (balanced random forest),
+in barycentric coordinates: a point at a vertex is assigned to that landscape with certainty;
+dotted lines separate the regions where each landscape is the most probable.}
+\label{fig:homog}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Pairwise separability of the landscapes (out-of-fold AUC) and paired bootstrap test of the
+homogenisation prediction $\Delta=\AUC_{\Pan\times\Fpl}-\AUC_{\Pan\times\Cer}>0$.}
+\label{tab:pairwise}
+\resizebox{\textwidth}{!}{\inputtable{tab_pairwise}}
+\end{table}
+
+\subsection{Few species draw the boundaries (O3)}\label{sec:rO3}
+% CONFERIR após cada execução: espécies com p < 0,05 na importância: \res{sig-species}.
+% Mensagem: (1) a identidade da várzea é dada por especialistas exclusivos (A. pallipes, P.
+% jurinei, P. lanio, P. paulista); (2) o Pantanal só se distingue por P. ruficeps (exclusiva,
+% poucos pontos); (3) a convergência Pan-Cer vem de generalistas compartilhados, sobretudo A.
+% bequaerti (\res{abeq-prev-pan} dos pontos do Pantanal, \res{abeq-prev-cer} do Cerrado);
+% (4) RECONCILIAÇÃO com o manuscrito irmão: o IndVal aponta A. bequaerti como indicadora do
+% Pantanal; o RF não ponderado do rascunho a associava ao Cerrado; no RF balanceado a afinidade
+% fica dividida -> A. bequaerti é marcador do CONJUNTO Pantanal+Cerrado, e sua "afinidade"
+% entre os dois depende do peso das classes. Dizer isso explicitamente.
+Only a few species carried the classification (Fig.~\ref{fig:importance}; Table~S1). Out-of-fold
+permutation importance was concentrated in \taxon{Agelaia pallipes} (\res{apal-imp}, $p$~\res{apal-imp-p})
+and \taxon{Polybia ruficeps} (\res{pruf-imp}, $p$~\res{pruf-imp-p}); the other species exclusive to the
+floodplain had low importance because they are partly redundant with \taxon{A.~pallipes}, so that
+shuffling any one of them leaves the floodplain recognisable. The identity
+of the floodplain rested on species recorded only there, chiefly \taxon{Agelaia pallipes} (present at
+\res{apal-prev-flo} of floodplain points; IndVal.g = \res{apal-indval}, $p$~\res{apal-indval-p}) and
+\taxon{Polybia jurinei}. The only species that singled out the Pantanal was \taxon{Polybia ruficeps},
+recorded exclusively there but at few points (\res{pruf-prev-pan}). The convergence between Pantanal
+and Cerrado, in turn, was driven by widespread species shared by the two areas, above all
+\taxon{Agelaia bequaerti}, recorded at \res{abeq-prev-pan} of Pantanal and \res{abeq-prev-cer} of Cerrado
+points but never in the floodplain; it was the only species recorded at \res{only-bequaerti-pan}
+Pantanal points and \res{only-bequaerti-cer} Cerrado points. Recording \taxon{A.~bequaerti} raised the
+predicted probability of both the Pantanal and the Cerrado (partial dependence, balanced forest:
+Pantanal \res{abeq-pd-pan}, Cerrado \res{abeq-pd-cer}), and the landscape it appeared to favour
+depended on class weighting: the unweighted forest associated it with the Cerrado
+(\res{abeq-pdunw-cer}), as in the first analysis, whereas IndVal.g, which equalises group sizes,
+assigned it to the Pantanal (\res{abeq-indval}, $p$~\res{abeq-indval-p}). SHAP values gave the same
+picture (Fig.~S1).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig4_importance.pdf}
+\caption{Species contributions. (a) Out-of-fold permutation importance of each species in the
+balanced random forest (drop in balanced accuracy when the species is shuffled among held-out
+points; mean and 95\% interval over repetitions; filled symbols: $p<0.05$ in the label-permutation
+test of \citet{altmann2010}; colour: landscape whose predicted probability increases most when the
+species is recorded). (b) Percentage of points of each landscape where the species was recorded.}
+\label{fig:importance}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig5_partial_dependence.pdf}
+\caption{Partial dependence of the predicted probability of each landscape on the number of
+independent records of the four most important species (balanced random forest fitted to all
+points). Ticks at the bottom show the observed values.}
+\label{fig:pdp}
+\end{figure}
+
+\subsection{Robustness (O4)}\label{sec:rO4}
+% Mensagem: a conclusão qualitativa (Pan x Fpl ~ 1 >> Pan x Cer ~ 0,5-0,6) não muda em nenhum
+% cenário; quantificar a faixa. Campanhas: a variação entre campanhas DENTRO da várzea é pequena
+% comparada à diferença entre paisagens, e pontos da várzea de uma campanha não vista continuam
+% reconhecidos -> a identidade da várzea não é artefato de data. MAS: não é possível testar a
+% campanha para Pantanal x Cerrado (amostrados quase só em 2025, Pantanal em nov.), dizer isso.
+The contrast between the two separabilities was stable across all \res{sens-n-scenarios} scenarios
+(Table~S2; Fig.~S2): $\AUC_{\Pan\times\Cer}$ ranged from \res{sens-auc-pancer-min} to
+\res{sens-auc-pancer-max}, whereas $\AUC_{\Pan\times\Fpl}$ never fell below
+\res{sens-auc-panfpl-min}. Spatially blocked cross-validation lowered balanced accuracy
+moderately (\res{sens-spatial-balacc} versus \res{sens-ref-balacc}) and did not make the Pantanal more
+separable from the Cerrado ($\AUC_{\Pan\times\Cer}$ = \res{sens-spatial-auc-pancer}). With equal sample sizes, \res{sens-equal-pan-to-cer}
+of the Pantanal points were still predicted as Cerrado. Removing \taxon{A.~bequaerti} did not make the
+Pantanal separable from the Cerrado ($\AUC_{\Pan\times\Cer}$ = \res{sens-nobeq-auc-pancer}).
+Within the floodplain, composition changed little among its three campaigns
+($R^2=\res{camp-fpl-R2}$, $p$~\res{camp-fpl-p}, compared with $R^2=\res{camp-land-R2}$ among
+landscapes), and floodplain points of a held-out campaign were still recognised (at least
+\res{transfer-fpl-min} correctly classified). Pantanal points from the two campaigns pointed the same
+way (May 2024: \res{pan-camp-202405}; November 2025: \res{pan-camp-202511}).
+% CONFERIR após cada execução: em out/2026 as duas campanhas do Pantanal tinham P(Cerrado) >> P(várzea).
+
+% =====================================================================================
+\section{Discussion}\label{sec:discussion}
+% OBJETIVO: interpretar, NÃO repetir números. Cinco parágrafos:
+%  P1 Resposta direta a H1 e H2 em uma ou duas frases (a mensagem central).
+%  P2 Mecanismo biológico: por que a várzea tem identidade (vegetação ripária, água, substrato
+%     para ninhos de Epiponini) e por que o Pantanal antropizado converge (simplificação do
+%     habitat, generalistas tolerantes como A. bequaerti, P. ignobilis, P. occidentalis).
+%     -> parágrafo dos BIÓLOGOS; citar literatura de vespas.
+%  P3 O que o ML acrescenta à PERMANOVA/IndVal: (a) mede o GRAU e a DIREÇÃO da sobreposição em
+%     uma escala interpretável (AUC); (b) é aplicável a novas amostras (monitoramento);
+%     (c) a validação mostrou que parte da confusão do rascunho era desbalanceamento.
+%  P4 LIMITAÇÕES E EXPLICAÇÕES ALTERNATIVAS (obrigatório, revisor vai cobrar): uma área por
+%     paisagem (pseudo-replicação, Hurlbert 1984) -> estudo de caso; proximidade geográfica
+%     Pan-Cer (\res{dist-pan-cer} km) e bacia do rio Paraguai em comum (distance decay,
+%     Soininen 2007); campanhas (Cerrado set/2025, Pantanal majoritariamente nov/2025, várzea
+%     2024); n pequeno; só armadilhas atrativas (viés para espécies atraídas por iscas).
+%  P5 Implicações e próximos passos: desenho com réplicas de áreas preservadas e antropizadas
+%     em cada bacia, mesma estação; usar o classificador treinado como ferramenta de
+%     monitoramento ("quanto esta área ainda se parece com uma várzea?").
+\paragraph{Lost identity of the anthropised wetland.}
+Social-wasp assemblages carried a clear signature of their landscape, but the signatures were not
+equally distinct. The preserved floodplain was unmistakable and shared almost no species with the
+other two areas (H1), whereas the anthropised Pantanal wetland could barely be told apart from the
+dry Cerrado: a classifier trained on these two areas ranked a Pantanal point above a Cerrado point
+only slightly more often than a coin would. Contrary to the expectation that two flood-pulse wetlands
+should resemble each other, the Pantanal and Cerrado assemblages behaved almost as a single
+assemblage, as predicted by H2.
+
+\paragraph{Biological mechanisms.}
+% BIÓLOGOS: revisar e completar. Os mecanismos abaixo vêm do rascunho e da literatura, mas NÃO foram
+% medidos aqui (não há variáveis de vegetação nem de microclima): escrever como hipóteses.
+The species that made the floodplain recognisable were swarm-founding Epiponini recorded only there,
+chiefly \taxon{Agelaia pallipes} and \taxon{Polybia jurinei}. Swarm-founding species build large,
+long-lived nests that depend on structurally complex vegetation, permanent water and abundant prey
+\citep{richards1978,jeanne1991}, conditions that riparian forests of preserved floodplains provide
+\citep{decastro2021,leite2026}. The convergence between Pantanal and Cerrado, in contrast, rested on
+species recorded in both areas, above all \taxon{Agelaia bequaerti}, which occurred at most points of
+both and was often the only species recorded. A plausible explanation is that the simplification of
+the vegetation around Baía Negra, with more insolation and desiccation, filters out
+moisture-dependent specialists and leaves an assemblage of tolerant species similar to that of a
+seasonally dry savanna \citep{jacques2023,francisco2023,almeida2014}; the only species that still
+singled out the Pantanal, \taxon{Polybia ruficeps}, was recorded at few points. Because no habitat
+variables were measured, these mechanisms remain hypotheses. \TODO{biologists: nesting habits of
+\taxon{A.~bequaerti} and \taxon{P.~ruficeps}; land use at Baía Negra.}
+
+\paragraph{What validated classifiers add.}
+The same data analysed with PERMANOVA show only that Pantanal and Cerrado do not differ
+significantly, which is absence of evidence. The pairwise AUC turns this into an effect size with
+an interval, on a scale with a direct reading (the probability of telling two samples apart), and
+the class probabilities give its direction: Pantanal points were pulled towards the Cerrado, not
+towards the other wetland. A trained classifier can also score new samples, which makes ``how much
+does this site still look like a preserved floodplain?'' an operational monitoring question. The
+validation steps were not a formality. With unequal classes, the unweighted forest of the first
+analysis made the overlap look one-sided, as if the Cerrado had absorbed the Pantanal
+(\res{rf-default-pan-to-cer} of the Pantanal points predicted as Cerrado, \res{rf-default-cer-to-pan}
+in the opposite direction); with balanced classes the confusion became mutual, and the apparent
+affinity of \taxon{A.~bequaerti} switched between Cerrado and Pantanal depending on class weighting.
+The overlap itself is robust, but its asymmetry, emphasised in the first draft, was an artefact of
+sample sizes; balanced models, a null reference and permutation tests are what allow the two to be
+told apart. Likewise, a negative or null importance of a widespread species does not mean that it
+is ecologically irrelevant, only that it does not help to separate the landscapes
+\citep{strobl2007}.
+
+\paragraph{Alternative explanations and limitations.}
+% Este parágrafo já está redigido porque é o que mais protege o artigo na revisão.
+Three features of the design limit causal inference. First, each landscape is represented by a single
+protected area, so the classifier distinguishes areas rather than landscape types, and the
+comparison is a case study rather than a replicated test \citep{hurlbert1984}. Second, the Pantanal
+and Cerrado sites are much closer to each other (\res{dist-pan-cer}~km) than either is to the
+floodplain (\res{dist-pan-fpl} and \res{dist-cer-fpl}~km) and both drain to the Paraguay River, whereas
+the floodplain belongs to the Paraná basin; distance decay of similarity \citep{soininen2007} alone
+could therefore produce a Pantanal--Cerrado resemblance. Third, the areas were sampled in different
+campaigns: the Cerrado at the end of the 2025 dry season, most Pantanal points two months later, and
+the floodplain in 2024. The within-floodplain checks suggest that campaign effects are small
+relative to landscape effects, but they cannot be evaluated for the Pantanal--Cerrado pair. The
+convergence we measured is therefore compatible with anthropogenic homogenisation, but a replicated
+design is needed to attribute it to disturbance. Finally, only attractive traps were analysed, which
+favours species attracted to fruit baits, and the sample is small, which our intervals reflect.
+
+\paragraph{Implications.}
+If confirmed by a replicated design, our results mean that protecting wetland status on paper is not
+enough to keep a wetland's fauna: the anthropised Pantanal area, although protected, has a wasp
+assemblage that no longer resembles that of a preserved wetland. The approach is directly transferable
+to monitoring. A classifier trained on reference (preserved) sites can score any new survey, and its
+predicted probability of ``preserved wetland'' is an interpretable index of lost identity. Testing
+the anthropogenic cause requires several preserved and disturbed wetlands in each basin, sampled in
+the same season, evaluated by leaving whole sites out of the training data, and habitat variables to
+link the loss of specialists to vegetation structure. \TODO{biologists: management recommendation for
+riparian vegetation at Baía Negra.}
+
+\section{Conclusions}\label{sec:conclusions}
+% 3-4 frases. Repetir a mensagem central e a implicação. Sem números novos.
+Social-wasp assemblages identify their landscape of origin far above chance. The preserved floodplain
+keeps an unmistakable identity, whereas the assemblage of an anthropised Pantanal wetland has become
+almost indistinguishable from that of a dry savanna, a convergence carried by a few widespread
+species. With one area per landscape this is a case study compatible with biotic homogenisation, not
+a demonstration of its cause. Validated, imbalance-aware classifiers and a direct pairwise test turn
+``the model confused two habitats'' into a quantitative measure of lost ecological identity that can
+be used to monitor wetlands.
+
+\section*{Data and code availability}
+% Os dados brutos estão em data/raw (fora do git até a publicação). Depositar no Zenodo e
+% citar o DOI aqui; o código já está no GitHub.
+Code, generated tables and figures are available at
+\url{https://github.com/GubioGL/Machine-learning-in-biology}.
+\TODO{Field data: deposit in Zenodo (or link the dataset of \citet{leite_companion}) and give the DOI.}
+
+\section*{Use of artificial intelligence}
+% O rascunho declarava o uso do Gemini; atualizar com todas as ferramentas efetivamente usadas.
+\TODO{Declare the AI tools used (code assistance and drafting) and state that all analytical decisions,
+interpretation and validation are the authors' responsibility.}
+
+\section*{Author contributions}
+\TODO{CRediT statement.}
+
+\section*{Acknowledgements}
+\TODO{Funding, permits (SISBIO), protected-area staff.}
+
+\bibliographystyle{plainnat}
 \bibliography{references}
+
+% =====================================================================================
+\clearpage
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+% APÊNDICES: um algoritmo por seção, com (1) a ideia em uma frase, (2) a formulação
+% matemática, (3) as escolhas usadas aqui e (4) por que ele foi usado. Estão escritos para um
+% revisor de ML; o guia-ponte (guia_ponte_ml_biologia.tex) traz a versão intuitiva.
+
+\section{Notation, dissimilarity and community tests}\label{app:community}
+Let $x_{ij}$ be the number of independent records of species $j$ at point $i$, $b_{ij}=\mathbb{1}[x_{ij}>0]$
+and $A_i=\{j: b_{ij}=1\}$ the species list of point $i$; $y_i$ is its landscape, $n_k$ the number of
+points of landscape $k$ and $K=3$.
+
+\paragraph{Jaccard dissimilarity.} $d_{ii'} = 1 - |A_i\cap A_{i'}|\,/\,|A_i\cup A_{i'}|$, the
+proportion of the species of two points that is not shared.
+
+\paragraph{PCoA.} With $\mathbf{D}^{(2)}=[d_{ii'}^2]$ and the centring matrix
+$\mathbf{J}=\mathbf{I}-n^{-1}\mathbf{1}\mathbf{1}^\top$, the Gower matrix
+$\mathbf{G}=-\tfrac12\mathbf{J}\mathbf{D}^{(2)}\mathbf{J}$ is diagonalised,
+$\mathbf{G}=\mathbf{V}\bm{\Lambda}\mathbf{V}^\top$, and the coordinates on axis $m$ are
+$\mathbf{v}_m\sqrt{\lambda_m}$ for $\lambda_m>0$ \citep{gower1966}. Axis $m$ explains
+$\lambda_m/\sum_{\lambda>0}\lambda$ of the inertia.
+
+\paragraph{PERMANOVA.} With total and within-group sums of squares
+$SS_T = n^{-1}\sum_{i<i'} d_{ii'}^2$ and $SS_W=\sum_k n_k^{-1}\sum_{i<i',\,y_i=y_{i'}=k} d_{ii'}^2$,
+\[
+F=\frac{(SS_T-SS_W)/(K-1)}{SS_W/(n-K)},\qquad R^2 = 1-\frac{SS_W}{SS_T},
+\]
+and $p=(1+\#\{F^{(\pi)}\ge F\})/(1+N_\pi)$ over $N_\pi$ random permutations $\pi$ of the labels
+\citep{anderson2001}. Pairwise tests use the points of two landscapes; $p$-values are Holm-adjusted.
+
+\paragraph{PERMDISP.} Each point's distance $z_i$ to the centroid of its landscape in the full PCoA
+space (negative eigenvalues handled as in \citealp{anderson2006}) enters a one-way ANOVA; residuals
+$z_i-\bar z_{y_i}$ are permuted to obtain the null distribution of $F$.
+
+\paragraph{IndVal.g.}\label{app:species} For species $j$ and landscape $k$, specificity
+$A_{kj}=\bar x_{kj}/\sum_{l}\bar x_{lj}$ (with group means $\bar x_{kj}$, i.e. equalised group sizes)
+and fidelity $B_{kj}=n_k^{-1}\sum_{i:y_i=k}b_{ij}$ combine into
+$\mathrm{IndVal.g}_{kj}=\sqrt{A_{kj}B_{kj}}$; the species is assigned to the landscape with the
+largest value, tested by label permutation \citep{dufrene1997,decaceres2009}.
+
+\section{Multinomial logistic regression}\label{app:logistic}
+\[
+P(y=k\mid\mathbf{x})=\frac{\exp(\beta_{0k}+\bm\beta_k^\top\tilde{\mathbf{x}})}
+{\sum_{l=1}^{K}\exp(\beta_{0l}+\bm\beta_l^\top\tilde{\mathbf{x}})},
+\]
+where $\tilde{\mathbf{x}}$ are frequencies standardised with the training-fold mean and standard
+deviation. Parameters minimise
+$-\sum_i w_{y_i}\log P(y_i\mid\mathbf{x}_i)+\tfrac{1}{2C}\sum_k\|\bm\beta_k\|_2^2$ with $C=1$ and class
+weights $w_k=n/(K n_k)$. A positive $\beta_{kj}$ means that recording species $j$ raises the odds of
+landscape $k$. \emph{Why:} the simplest model that can use all species jointly; if it performed as
+well as the forests, non-linear interactions would be unnecessary.
+
+\section{$k$-nearest neighbours with Jaccard distance}\label{app:knn}
+A point is assigned to the most frequent landscape among its $k=5$ nearest training points in Jaccard
+dissimilarity, and $\hat P(y=k\mid\mathbf{x})$ is the fraction of those neighbours from landscape $k$.
+\emph{Why:} it is the predictive version of the similarity reasoning of community ecology (``this
+sample looks like those''), so its errors show what composition alone implies, without any model.
+
+\section{Random forests and balanced random forests}\label{app:rf}
+A classification tree recursively splits the points; at a node with class proportions $p_k$, the
+split on species $j$ at threshold $t$ that maximises the decrease in Gini impurity
+$G=1-\sum_k p_k^2$ is chosen. A random forest averages $B$ trees,
+\[
+\hat P(y=k\mid\mathbf{x})=\frac{1}{B}\sum_{b=1}^{B}\hat P_b(y=k\mid\mathbf{x}),
+\]
+each grown on a bootstrap sample of the points and choosing each split among $m_{\mathrm{try}}=
+\lfloor\sqrt{p}\rfloor$ randomly drawn species \citep{breiman2001}. Averaging many decorrelated trees
+reduces variance while keeping the ability of trees to represent interactions (``\taxon{A.~pallipes}
+present \emph{and} \taxon{P.~ruficeps} absent'') and to ignore irrelevant zeros. In the
+\emph{class-weighted} forest, each point of class $k$ has weight $n/(Kn_k)$ within every bootstrap
+sample. In the \emph{balanced} random forest \citep{chen2004}, each tree is grown on a sample drawn
+with replacement containing the same number of points (the size of the smallest class) from every
+class. \emph{Why:} the forest is the standard flexible model for community data
+\citep{cutler2007}; balancing prevents the larger classes from attracting the errors of the smaller
+one, which is essential when the confusion of the smallest class (Pantanal) is the object of the
+hypothesis.
+
+\section{Gradient boosting}\label{app:boosting}
+Boosting builds an additive model $F_M(\mathbf{x})=\sum_{m=1}^{M}\nu f_m(\mathbf{x})$ of shallow trees
+$f_m$ (depth 2), each fitted to the negative gradient of the multinomial log-loss of the current model,
+with learning rate $\nu=0.05$, $M=200$ iterations, at least four points per leaf and class weights
+\citep{friedman2001}. \emph{Why:} a different way of combining trees (sequential error correction
+rather than averaging); agreement with the forests shows that the conclusions do not depend on one
+algorithm.
+
+\section{Validation, metrics and permutation tests}\label{app:validation}
+For repetition $r=1,\dots,R$ the points are split into five stratified folds; every point $i$ receives
+a prediction $\hat y_i^{(r)}$ and probabilities $\hat{\mathbf{p}}_i^{(r)}$ from the model trained
+without its fold. With recall $\mathrm{Rec}_k=\#\{i:y_i=k,\hat y_i=k\}/n_k$,
+\[
+\mathrm{BA}=\frac1K\sum_{k}\mathrm{Rec}_k,\qquad
+\kappa=\frac{p_o-p_e}{1-p_e},\qquad
+\mathrm{LL}=-\frac1n\sum_i\log\hat p_{i,y_i},
+\]
+where $p_o$ is the observed agreement and $p_e$ the agreement expected from the marginal frequencies
+\citep{cohen1960,brodersen2010}. Each metric is computed per repetition, and its mean and 2.5--97.5
+percentiles are reported. The permutation test recomputes the cross-validated BA after permuting the
+labels, $p=(1+\#\{\mathrm{BA}^{(\pi)}\ge\mathrm{BA}\})/(1+N_\pi)$, which tests whether the model has
+learned any association between composition and landscape \citep{ojala2010}.
+
+\section{Pairwise AUC and paired bootstrap}\label{app:auc}
+For landscapes $a$ (positive) and $b$, let $s_i$ be the out-of-fold probability of $a$ for point $i$,
+averaged over repetitions. The AUC is the Mann--Whitney statistic
+\[
+\AUC_{a\times b}=\frac{1}{n_a n_b}\sum_{i:y_i=a}\sum_{i':y_{i'}=b}
+\left(\mathbb{1}[s_i>s_{i'}]+\tfrac12\mathbb{1}[s_i=s_{i'}]\right).
+\]
+For $\Delta=\AUC_{\Pan\times\Fpl}-\AUC_{\Pan\times\Cer}$, each bootstrap resample draws Pantanal,
+floodplain and Cerrado points with replacement within landscapes, using the same Pantanal draw in both
+AUCs; the 2.5--97.5 percentiles of $\Delta^{*}$ give the interval and $P(\Delta^{*}\le0)$ the one-sided
+bootstrap $p$-value \citep{efron1993}.
+
+\section{Permutation importance, partial dependence and SHAP}\label{app:importance}
+\paragraph{Out-of-fold permutation importance.} For species $j$, within each test fold the column $j$
+is permuted among the held-out points and the fold is predicted again; with $\mathrm{BA}$ the pooled
+out-of-fold balanced accuracy,
+$I_j = \mathrm{BA}-\frac1Q\sum_{q=1}^{Q}\mathrm{BA}^{(\pi_j,q)}$, averaged over repetitions. Computing
+it on held-out points measures how much the model's \emph{generalisation} depends on $j$. The
+$p$-value compares $I_j$ with importances recomputed after permuting the labels \citep{altmann2010}.
+
+\paragraph{Partial dependence.} $\mathrm{PD}_{jk}(v)=\frac1n\sum_i\hat P(y=k\mid x_{ij}=v,\mathbf{x}_{i,-j})$,
+the mean predicted probability of landscape $k$ when species $j$ is set to $v$ records at every point
+\citep{friedman2001}. It describes a species' response curve as seen by the model.
+
+\paragraph{SHAP.} For a prediction $f(\mathbf{x})$, the Shapley value of species $j$ is
+\[
+\phi_j=\sum_{S\subseteq\mathcal{F}\setminus\{j\}}\frac{|S|!\,(p-|S|-1)!}{p!}
+\left[f_{S\cup\{j\}}(\mathbf{x})-f_S(\mathbf{x})\right],
+\]
+the average change in prediction when $j$ joins a coalition $S$ of species; the $\phi_j$ add up to
+the prediction minus the mean prediction. TreeSHAP computes them exactly for tree ensembles
+\citep{lundberg2017,lundberg2020}. Importance measures share credit among co-occurring species
+\citep{strobl2007}, so they are interpreted together with occurrence patterns (Fig.~\ref{fig:importance}b).
+
+\section{Spatially blocked cross-validation}\label{app:spatial}
+Within each landscape, point coordinates (converted to km) are grouped into three clusters by
+$k$-means; fold $b$ holds out cluster $b$ of every landscape, with the pairing of clusters to folds
+randomised in each repetition. Test points therefore have no spatial neighbours of their own cluster in
+the training data, which removes the optimism caused by spatial autocorrelation within areas
+\citep{roberts2017,ploton2020}. It cannot address differences between areas, because each landscape
+is a single area.
+
+\section{DOME summary}\label{app:dome}
+\begin{center}
+\small
+\begin{tabular}{p{2.6cm}p{11.5cm}}
+\toprule
+Data & \res{n-points} points (\res{n-floodplain}/\res{n-pantanal}/\res{n-cerrado}),
+\res{n-species} species, \res{n-records} independent records; attractive suspended traps only;
+three protected areas, one per landscape; raw data \TODO{DOI}.\\
+Optimisation & Hyperparameters fixed a priori (no tuning); standardisation inside each training fold
+for the logistic model; class weights or class-balanced bootstrap for imbalance.\\
+Model & Null, logistic ($L_2$), $k$-NN (Jaccard), random forests (unweighted, weighted, balanced),
+gradient boosting; balanced random forest pre-specified as main model.\\
+Evaluation & Stratified 5-fold CV $\times$ \res{nrep}; balanced accuracy, macro-$F_1$, $\kappa$,
+log-loss; label permutation tests; pairwise AUC with paired bootstrap; spatial blocks and further
+sensitivity scenarios.\\
+Code & \url{https://github.com/GubioGL/Machine-learning-in-biology} (\texttt{run/01}--\texttt{05})\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Supplementary tables and figures}\label{app:supp}
+\begin{landscape}
+\begin{table}
+\centering
+\caption*{\textbf{Table S1.} Species occurrence, model-based affinity and indicator value. Occurrence:
+percentage of points of each landscape where the species was recorded. P(landscape $\mid$ recorded):
+partial dependence of the balanced random forest at one record. Affinity: landscape whose probability
+rises most when the species is recorded, in the balanced (BRF) and unweighted (RF$_{\mathrm{unw}}$)
+forests. Permutation importance: drop in out-of-fold balanced accuracy, with label-permutation
+$p$-value. IndVal.g: group with the largest value (statistic) and permutation $p$-value. Bold:
+$p<0.05$.}
+\scriptsize
+\resizebox{\linewidth}{!}{\inputtable{tab_species}}
+\end{table}
+\end{landscape}
+
+\begin{table}[h]
+\centering
+\caption*{\textbf{Table S2.} Robustness of the key quantities. Each scenario changes one analytical
+decision (Section~\ref{sec:mrobust}); \res{sens-nrep} repetitions per scenario.}
+\resizebox{\textwidth}{!}{\inputtable{tab_sensitivity}}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\IfFileExists{figures/figS1_shap.pdf}{\includegraphics[width=\linewidth]{figS1_shap.pdf}}{\TODO{figS1}}
+\caption*{\textbf{Figure S1.} SHAP values of each species for the predicted probability of Pantanal
+and of Cerrado (class-weighted random forest fitted to all points). Each dot is a sampling point;
+colour: species recorded (coloured) or absent (grey).}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{figS2_sensitivity.pdf}
+\caption*{\textbf{Figure S2.} Robustness scenarios: balanced accuracy, proportion of Pantanal points
+predicted as Cerrado and $\AUC_{\Pan\times\Cer}$ (range over repetitions or subsamples; dashed line:
+indistinguishable). Grey vertical lines mark the reference analysis.}
+\end{figure}
 
 \end{document}

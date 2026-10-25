@@ -1,4 +1,9 @@
 # Python >= 3.10.   pip install -r run/requirements.txt
-# Add the packages your project needs below.
 numpy
+pandas>=2.0
+scipy
+scikit-learn>=1.4
+imbalanced-learn>=0.12     # Balanced Random Forest
+joblib
 matplotlib
+shap                       # optional: only for Figure S1 (run/04 skips it if missing)
