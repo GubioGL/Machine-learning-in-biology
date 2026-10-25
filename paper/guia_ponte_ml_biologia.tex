@@ -1,8 +1,10 @@
 % =====================================================================================
 %  GUIA-PONTE: aprendizado de máquina <-> biologia das vespas sociais
 %  Documento de apoio para os autores (NÃO faz parte do artigo).
-%  No Overleaf: Menu -> Main document -> guia_ponte_ml_biologia.tex para compilar este
-%  arquivo (volte para main.tex depois). Usa os mesmos números gerados pelos scripts
+%  COMO COMPILAR NO OVERLEAF: o Overleaf só compila o "Main document" (por padrão, main.tex).
+%  Menu (canto superior esquerdo) -> Main document -> guia_ponte_ml_biologia.tex -> Recompile.
+%  Depois volte o Main document para main.tex. Compilador: pdfLaTeX (XeLaTeX/LuaLaTeX também
+%  funcionam). Uma versão já compilada está em docs/guia_ponte_ml_biologia.pdf no GitHub. Usa os mesmos números gerados pelos scripts
 %  (paper/generated/res_*.tex), então os exemplos mostram os valores da última execução.
 % =====================================================================================
 \documentclass[11pt,a4paper]{article}
@@ -10,11 +12,12 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
-\IfFileExists{brazil.ldf}{\usepackage[brazil]{babel}}{}
+\IfFileExists{brazil.ldf}{\usepackage[brazil]{babel}}{}   % hifenização e nomes em português
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs,tabularx,longtable}
 \usepackage{enumitem}
-\usepackage[most]{tcolorbox}
+\usepackage{tcolorbox}                % só o núcleo: menos pacotes, menos chance de erro
+\tcbuselibrary{breakable}
 \usepackage{xcolor}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true, linkcolor=blue!50!black, urlcolor=blue!50!black}
@@ -30,7 +33,7 @@
   fonttitle=\bfseries\small, boxrule=0.5pt, arc=2pt}
 \newtcolorbox{mlbox}{colback=blue!4, colframe=blue!50!black, title=Para quem vem do ML,
   fonttitle=\bfseries\small, boxrule=0.5pt, arc=2pt}
-\newtcolorbox{cuidado}{colback=red!3, colframe=red!50!black, title=Cuidado,
+\newtcolorbox{cuidado}{breakable, colback=red!3, colframe=red!50!black, title=Cuidado,
   fonttitle=\bfseries\small, boxrule=0.5pt, arc=2pt}
 \setlist[description]{style=nextline, leftmargin=1.2em, itemsep=3pt}
 \newcommand{\taxon}[1]{\textit{#1}}
@@ -256,7 +259,7 @@ proporções, chutar sempre ``várzea'' acerta 39\%. Acurácia balanceada do nul
 \res{null-prior-balacc}.
 \end{description}
 
-\subsection{Regressão logística multinomial com penalização $L_2$ (baseline interpretável)}
+\subsection{Regressão logística multinomial com penalização \texorpdfstring{$L_2$}{L2} (baseline interpretável)}
 \begin{description}
 \item[Em uma frase] Dá a cada espécie um peso por paisagem; somando os pesos das espécies
 presentes, obtém a probabilidade de cada paisagem.
@@ -268,7 +271,7 @@ cada espécie contribui isoladamente. Aqui ela chegou a \res{logistic-balacc}, p
 para controlar isso.
 \end{description}
 
-\subsection{$k$ vizinhos mais próximos com Jaccard (a ponte mais direta)}
+\subsection{\texorpdfstring{$k$}{k} vizinhos mais próximos com Jaccard (a ponte mais direta)}
 \begin{description}
 \item[Em uma frase] Um ponto recebe a paisagem dos 5 pontos com a fauna mais parecida.
 \item[Responde] O que a semelhança de composição, sozinha, implica?
