@@ -1,0 +1,4 @@
+# Python >= 3.10.   pip install -r run/requirements.txt
+# Add the packages your project needs below.
+numpy
+matplotlib
