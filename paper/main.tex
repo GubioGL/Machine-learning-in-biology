@@ -11,8 +11,12 @@
 %    vermelho como [chave?].
 %  - Tabelas geradas pelos scripts entram com \inputtable{nome} (paper/generated/nome.tex).
 %  - \TODO{...} marca o que ainda depende dos autores; \showtodosfalse esconde todos.
-%  - Classe da revista: troque o \documentclass (ex.: Elsevier elsarticle; Springer sn-jnl;
-%    para Ecological Indicators / Journal of Insect Conservation / Ecological Informatics).
+%  - LAYOUT EM DUAS COLUNAS (article twocolumn). Figuras e tabelas largas usam figure*/table*
+%    (ocupam as duas colunas e vão para o topo de uma página); as estreitas usam figure/table.
+%    Os apêndices e o material suplementar voltam para uma coluna (\onecolumn).
+%  - Classe da revista: troque o \documentclass quando escolherem a revista, por exemplo
+%    Elsevier (Ecological Indicators, Ecological Informatics): \documentclass[5p,times,twocolumn]{elsarticle}
+%    Springer (Journal of Insect Conservation): modelo sn-jnl da página da revista no Overleaf.
 %
 %  MENSAGEM CENTRAL (uma frase, deve aparecer no resumo, no fim da introdução e na conclusão)
 %    "A composição de vespas sociais identifica a paisagem de origem muito acima do acaso; a
@@ -21,9 +25,9 @@
 %     homogeneização biótica, mas que, com uma área por paisagem, não pode ser separado da
 %     proximidade geográfica e da campanha de coleta."
 % =====================================================================================
-\documentclass[11pt]{article}
+\documentclass[10pt,a4paper,twocolumn]{article}
 
-\usepackage[margin=2.5cm]{geometry}
+\usepackage[margin=2cm,columnsep=0.75cm]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
@@ -35,7 +39,7 @@
 \usepackage{pdflscape}
 \usepackage{caption}
 \usepackage[round,sort&compress]{natbib}
-\usepackage{lineno}
+\usepackage[switch]{lineno}        % twocolumn: numbers in the outer margin of each column
 \usepackage{hyperref}
 
 \hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black, urlcolor=blue!50!black}
@@ -71,12 +75,15 @@
 %  (c) "Indistinguishable assemblages: ..."  (mais forte; só se a robustez confirmar)
 \title{Lost signatures: validated machine learning reveals convergence between social-wasp
 assemblages of an anthropised wetland and a dry savanna}
-\author{Jo\~ao Marcos Gomes Leite \and Gubio G. de Lima\thanks{\TODO{affiliation}. E-mail:
-\texttt{gubio.gomes@estudante.ufscar.br}} \and Josu\'e Raizer \and \TODO{other authors, order and
-affiliations}}
+\author{Jo\~ao Marcos Gomes Leite \and Gubio G. de Lima \and Josu\'e Raizer \and
+\TODO{other authors, order}\\[4pt]
+\small \TODO{affiliations}. Correspondence: \texttt{gubio.gomes@estudante.ufscar.br}}
 \date{\today}
 
 \begin{document}
+% Título, resumo e palavras-chave ocupam a largura toda; o texto começa em duas colunas.
+\twocolumn[{%
+\begin{@twocolumnfalse}
 \maketitle
 
 % =====================================================================================
@@ -111,6 +118,9 @@ habitats'' into a quantitative, testable measure of lost ecological identity.
 
 \noindent\textbf{Keywords:} biotic homogenisation; random forest; classification; Pantanal;
 Cerrado; Polistinae; bioindicators; cross-validation
+\vspace{1.2em}
+\end{@twocolumnfalse}
+}]
 
 % =====================================================================================
 \section{Introduction}\label{sec:intro}
@@ -245,14 +255,14 @@ whereas the floodplain lies \res{dist-pan-fpl}~km from the Pantanal and \res{dis
 Cerrado site (distances between point centroids). Sampling campaigns also differed among areas
 (Table~\ref{tab:sampling}).
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \caption{Sampling design. Points with attractive suspended traps per landscape, sampling campaigns
 (year-month, with the number of points), independent records (species $\times$ point $\times$ date),
 species and mean number of species per point.}
 \label{tab:sampling}
 \resizebox{\textwidth}{!}{\inputtable{tab_sampling}}
-\end{table}
+\end{table*}
 
 \subsection{From captures to a site-by-species matrix}\label{sec:matrix}
 % Conteúdo: definição de registro independente (por que: várias operárias da mesma colônia);
@@ -279,7 +289,7 @@ definitions and checked against the values reported for the same data in R
 \citep{leite_companion}. Code, generated tables and the exact settings are available in the project
 repository.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \caption{Objectives, questions and analyses. Each step corresponds to one script of the repository.}
 \label{tab:strategy}
@@ -304,7 +314,7 @@ the dominant shared species, hyperparameters, campaign checks (\texttt{05}) & Ta
 Fig.~S2\\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{Community composition}\label{sec:mcommunity}
 % Conteúdo: Jaccard binário; PCoA; PERMANOVA global e par a par (Holm); PERMDISP (para
@@ -449,23 +459,23 @@ among landscapes (PERMDISP $F=\res{permdisp-F}$, $p$~\res{permdisp-p}).
 \res{pool-jac-pan-fpl}, Cer--Fpl \res{pool-jac-cer-fpl}: decide whether to report (it nuances the
 picture: with all methods the Pantanal shares more species with the floodplain than the Cerrado does).}
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\linewidth]{fig1_community.pdf}
+\includegraphics[width=\textwidth]{fig1_community.pdf}
 \caption{Composition of social-wasp assemblages in the three landscapes. (a) Principal coordinates
 analysis of Jaccard dissimilarities between sampling points (ellipses: 95\% normal-theory regions;
 points slightly jittered because several share identical species lists). (b) Mean Jaccard
 dissimilarity between points of different landscapes (off-diagonal) and within landscapes
 (diagonal).}
 \label{fig:community}
-\end{figure}
+\end{figure*}
 
 \begin{table}[t]
 \centering
 \caption{PERMANOVA of Jaccard dissimilarities among landscapes, pairwise tests (Holm-adjusted) and
 test of homogeneity of multivariate dispersion (PERMDISP).}
 \label{tab:permanova}
-\inputtable{tab_permanova}
+\resizebox{\columnwidth}{!}{\inputtable{tab_permanova}}
 \end{table}
 
 \subsection{The assemblage identifies the landscape (O1)}\label{sec:rO1}
@@ -496,25 +506,25 @@ the landscape of the most similar points and is the most sensitive to class size
 % CONFERIR após cada execução: a frase acima vale se a confusão do RF não ponderado for assimétrica
 % (rf-default-pan-to-cer >> rf-default-cer-to-pan) e a do BRF for mais simétrica.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\linewidth]{fig2_benchmark.pdf}
+\includegraphics[width=\textwidth]{fig2_benchmark.pdf}
 \caption{Predictive performance. (a) Out-of-fold balanced accuracy of each classifier over
 \res{nrep} repetitions of stratified five-fold cross-validation (dots: repetitions; black: mean and
 95\% interval; $p$: label-permutation test; dashed line: chance). (b, c) Confusion matrices
 (mean counts over repetitions and row percentages) of the unweighted random forest used in the first
 analysis and of the balanced random forest.}
 \label{fig:benchmark}
-\end{figure}
+\end{figure*}
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \caption{Performance of the classifiers (means over \res{nrep} repetitions of stratified five-fold
 cross-validation; 95\% interval for balanced accuracy). Pan.$\to$Cer.: proportion of Pantanal points
 predicted as Cerrado. $p_{\mathrm{perm}}$: label-permutation test of balanced accuracy.}
 \label{tab:benchmark}
 \resizebox{\textwidth}{!}{\inputtable{tab_benchmark}}
-\end{table}
+\end{table*}
 
 \subsection{The Pantanal assemblage has converged on the Cerrado (O2)}\label{sec:rO2}
 % Mensagem PRINCIPAL do artigo. Ordem: AUC Pan x Fpl ~ 1 (identidade da várzea = H1);
@@ -536,9 +546,9 @@ the probability simplex (Fig.~\ref{fig:homog}b). The same pattern appears withou
 \res{pan-closer-cer} Pantanal points were closer, in Jaccard dissimilarity, to the Cerrado points
 than to the floodplain points (mean \res{pan-jac-cer} versus \res{pan-jac-fpl}).
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\linewidth]{fig3_homogenization.pdf}
+\includegraphics[width=\textwidth]{fig3_homogenization.pdf}
 \caption{Direct test of homogenisation. (a) Separability (out-of-fold AUC) of each pair of
 landscapes for the balanced random forest and the logistic regression; violins: \res{nboot}
 bootstrap resamples; bars: 95\% intervals. An AUC of 0.5 means the two assemblages cannot be told
@@ -546,15 +556,15 @@ apart. (b) Out-of-fold probabilities of the three landscapes for every point (ba
 in barycentric coordinates: a point at a vertex is assigned to that landscape with certainty;
 dotted lines separate the regions where each landscape is the most probable.}
 \label{fig:homog}
-\end{figure}
+\end{figure*}
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \caption{Pairwise separability of the landscapes (out-of-fold AUC) and paired bootstrap test of the
 homogenisation prediction $\Delta=\AUC_{\Pan\times\Fpl}-\AUC_{\Pan\times\Cer}>0$.}
 \label{tab:pairwise}
 \resizebox{\textwidth}{!}{\inputtable{tab_pairwise}}
-\end{table}
+\end{table*}
 
 \subsection{Few species draw the boundaries (O3)}\label{sec:rO3}
 % CONFERIR após cada execução: espécies com p < 0,05 na importância: \res{sig-species}.
@@ -586,25 +596,25 @@ depended on class weighting: the unweighted forest associated it with the Cerrad
 assigned it to the Pantanal (\res{abeq-indval}, $p$~\res{abeq-indval-p}). SHAP values gave the same
 picture (Fig.~S1).
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\linewidth]{fig4_importance.pdf}
+\includegraphics[width=\textwidth]{fig4_importance.pdf}
 \caption{Species contributions. (a) Out-of-fold permutation importance of each species in the
 balanced random forest (drop in balanced accuracy when the species is shuffled among held-out
 points; mean and 95\% interval over repetitions; filled symbols: $p<0.05$ in the label-permutation
 test of \citet{altmann2010}; colour: landscape whose predicted probability increases most when the
 species is recorded). (b) Percentage of points of each landscape where the species was recorded.}
 \label{fig:importance}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\linewidth]{fig5_partial_dependence.pdf}
+\includegraphics[width=\textwidth]{fig5_partial_dependence.pdf}
 \caption{Partial dependence of the predicted probability of each landscape on the number of
 independent records of the four most important species (balanced random forest fitted to all
 points). Ticks at the bottom show the observed values.}
 \label{fig:pdp}
-\end{figure}
+\end{figure*}
 
 \subsection{Robustness (O4)}\label{sec:rO4}
 % Mensagem: a conclusão qualitativa (Pan x Fpl ~ 1 >> Pan x Cer ~ 0,5-0,6) não muda em nenhum
@@ -746,10 +756,10 @@ interpretation and validation are the authors' responsibility.}
 \TODO{Funding, permits (SISBIO), protected-area staff.}
 
 \bibliographystyle{plainnat}
-\bibliography{references}
+{\small\bibliography{references}}
 
 % =====================================================================================
-\clearpage
+\onecolumn          % apêndices e suplemento em uma coluna (a tabela S1 é em paisagem)
 \appendix
 \renewcommand{\thesection}{\Alph{section}}
 % APÊNDICES: um algoritmo por seção, com (1) a ideia em uma frase, (2) a formulação
